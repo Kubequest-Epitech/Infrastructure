@@ -3,12 +3,14 @@
   hosts: servers
 
   tasks:
-    - name: creer un fichier de test
+    - name: Creer un fichier de test
       ansible.builtin.file:
         path: /tmp/test_ansible
         state: touch
+        mode: '0644'
 
-    - name: creer un fichier de test
+    - name: Creer un fichier de test 2
       ansible.builtin.file:
         path: /tmp/test_ansible_2
         state: touch
+        mode: '0644'
