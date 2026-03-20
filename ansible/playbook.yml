@@ -1,10 +1,9 @@
 ---
-- name: Test de connectivité
+
+- name: Preparation de tous les noeuds
   hosts: kube_all
-
-  tasks:
-    - name: Creer un fichier de test
-      ansible.builtin.include_role:
-        name: install_kubeadm
-     
-
+  tags: preparation
+  become: true
+  roles:
+    - docker
+    - install_kubeadm
