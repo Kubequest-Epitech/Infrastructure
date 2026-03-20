@@ -1,0 +1,12 @@
+---
+- name: Desactiver le swap
+  ansible.builtin.include_tasks: desactiver_swap.yml
+
+- name: Configuration iptables
+  ansible.builtin.include_tasks: configuration_iptables.yml
+
+- name: Ouverture des ports
+  ansible.builtin.include_tasks: ouverture_ports.yml
+
+- name: Installation de kubeadm, kubelet et kubectl
+  ansible.builtin.include_tasks: install_packages.yml

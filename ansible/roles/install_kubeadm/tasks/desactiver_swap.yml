@@ -1,0 +1,10 @@
+---
+- name: Désactiver le swap
+  command: swapoff -a
+  when: ansible_swaptotal_mb > 0
+
+- name: Desactiver le swap de manière permanente
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*\sswap\s.*)$'
+    replace: '# \1'

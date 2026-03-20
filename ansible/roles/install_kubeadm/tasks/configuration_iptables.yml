@@ -1,0 +1,29 @@
+---
+
+- name: Enable br_netfilter module
+  become: true
+  modprobe:
+    name: br_netfilter
+    state: present
+
+- name: Ensure br_netfilter is loaded at boot
+  become: true
+  copy:
+    dest: /etc/modules-load.d/br_netfilter.conf
+    content: br_netfilter
+
+- name: Set bridge-nf-call-iptables
+  become: true
+  sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    value: 1
+    state: present
+    reload: yes
+
+- name: Set bridge-nf-call-ip6tables
+  become: true
+  sysctl:
+    name: net.bridge.bridge-nf-call-ip6tables
+    value: 1
+    state: present
+    reload: yes
