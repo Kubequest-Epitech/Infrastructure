@@ -1,8 +1,8 @@
-[servers]
-ec2-3-254-21-149.eu-west-1.compute.amazonaws.com
-ec2-54-216-108-128.eu-west-1.compute.amazonaws.com
-ec2-3-254-113-7.eu-west-1.compute.amazonaws.com
-ec2-108-130-239-23.eu-west-1.compute.amazonaws.com
+[kube_all:children]
+kube1
+kube2
+ingress
+monitoring
 
 [kube1]
 ec2-3-254-21-149.eu-west-1.compute.amazonaws.com

@@ -1,16 +1,10 @@
 ---
 - name: Test de connectivité
-  hosts: servers
+  hosts: kube_all
 
   tasks:
     - name: Creer un fichier de test
-      ansible.builtin.file:
-        path: /tmp/test_ansible
-        state: touch
-        mode: '0644'
+      ansible.builtin.include_role:
+        name: install_kubeadm
+     
 
-    - name: Creer un fichier de test 2
-      ansible.builtin.file:
-        path: /tmp/test_ansible_2
-        state: touch
-        mode: '0644'
