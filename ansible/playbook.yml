@@ -1,16 +1,21 @@
 ---
 - name: Test de connectivité
   hosts: servers
+  become: true
 
   tasks:
     - name: Creer un fichier de test
       ansible.builtin.file:
         path: /tmp/test_ansible
         state: touch
-        mode: '0644'
+        mode: "0644"
 
     - name: Creer un fichier de test 2
       ansible.builtin.file:
         path: /tmp/test_ansible_2
         state: touch
-        mode: '0644'
+        mode: "0644"
+
+    - name: Installation de Docker
+      ansible.builtin.include_role:
+        name: docker
