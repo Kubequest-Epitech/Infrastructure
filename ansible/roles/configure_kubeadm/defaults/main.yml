@@ -1,0 +1,5 @@
+---
+node_labels:
+  kube2: worker
+  ingress: ingress
+  monitoring: monitoring
