@@ -5,7 +5,7 @@ INVENTORY=inventories/hosts
 PLAYBOOK=playbook.yml
 VENV=.venv
 
-.PHONY: help install run reset dashboard
+.PHONY: help install run reset dashboard traefik
 
 install: ## Installer les dependances Ansible dans le venv
 	@if ! $(VENV)/bin/python3 --version >/dev/null 2>&1; then \
@@ -39,6 +39,17 @@ dashboard: install ## Deployer Kubernetes Dashboard
 		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
 		echo "Deploying Kubernetes Dashboard..."; \
 		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags dashboard; \
+	'
+
+traefik: install ## Deployer Traefik sur le node ingress
+	@echo "Starting ssh-agent with venv..."
+	@bash -c '\
+		eval "$$(ssh-agent -s)"; \
+		. $(VENV)/bin/activate; \
+		echo "Adding vaulted SSH key..."; \
+		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
+		echo "Deploying Traefik..."; \
+		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags traefik; \
 	'
 
 reset: install ## Supprimer le cluster Kubernetes (kubeadm reset)

@@ -15,6 +15,16 @@
   roles:
     - configure_kubeadm
 
+
+
+- name: Installer Helm et deployer Traefik
+  hosts: kube1
+  tags: traefik
+  become: true
+  roles:
+    - install_helm
+    - traefik
+
 - name: Deployer Kubernetes Dashboard
   hosts: kube1
   tags: dashboard

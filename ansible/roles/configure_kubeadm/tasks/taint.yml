@@ -1,0 +1,9 @@
+---
+- name: Tainter les nodes du groupe {{ item.key }}
+  ansible.builtin.command:
+    cmd: kubectl taint nodes {{ hostvars[node]['ansible_fqdn'] }} {{ item.value }} --overwrite
+  loop: "{{ node_taints | dict2items }}"
+  loop_control:
+    label: "{{ item.key }} -> {{ item.value }}"
+  vars:
+    node: "{{ groups[item.key][0] }}"
