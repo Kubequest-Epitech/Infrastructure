@@ -1,0 +1,12 @@
+---
+- name: Initialiser le control plane
+  ansible.builtin.include_tasks: init.yml
+  when: inventory_hostname in groups['kube1']
+
+- name: Joindre les workers au cluster
+  ansible.builtin.include_tasks: join.yml
+  when: inventory_hostname not in groups['kube1']
+
+- name: Labeliser les nodes
+  ansible.builtin.include_tasks: label.yml
+  when: inventory_hostname in groups['kube1']

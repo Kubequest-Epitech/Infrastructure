@@ -7,3 +7,19 @@
   roles:
     - docker
     - install_kubeadm
+
+- name: Configurer le cluster Kubernetes
+  hosts: kube_all
+  tags: configure
+  become: true
+  roles:
+    - configure_kubeadm
+
+- name: Supprimer le cluster Kubernetes
+  hosts: kube_all
+  tags:
+    - reset
+    - never
+  become: true
+  roles:
+    - reset_kubeadm

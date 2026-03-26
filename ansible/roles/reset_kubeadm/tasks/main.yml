@@ -1,0 +1,38 @@
+---
+- name: Drainer le node avant suppression
+  ansible.builtin.command:
+    cmd: kubectl drain {{ hostvars[item]['ansible_hostname'] }} --ignore-daemonsets --delete-emptydir-data --force
+  loop: "{{ groups['kube_all'] | difference(groups['kube1']) }}"
+  loop_control:
+    label: "{{ item }}"
+  failed_when: false
+  when: inventory_hostname in groups['kube1']
+
+- name: Supprimer les nodes du cluster
+  ansible.builtin.command:
+    cmd: kubectl delete node {{ hostvars[item]['ansible_hostname'] }}
+  loop: "{{ groups['kube_all'] | difference(groups['kube1']) }}"
+  loop_control:
+    label: "{{ item }}"
+  failed_when: false
+  when: inventory_hostname in groups['kube1']
+
+- name: Reset kubeadm sur les workers
+  ansible.builtin.command:
+    cmd: kubeadm reset -f
+  when: inventory_hostname not in groups['kube1']
+
+- name: Reset kubeadm sur le control plane
+  ansible.builtin.command:
+    cmd: kubeadm reset -f
+  when: inventory_hostname in groups['kube1']
+
+- name: Supprimer le repertoire .kube
+  ansible.builtin.file:
+    path: /root/.kube
+    state: absent
+
+- name: Supprimer le repertoire /etc/kubernetes
+  ansible.builtin.file:
+    path: /etc/kubernetes
+    state: absent

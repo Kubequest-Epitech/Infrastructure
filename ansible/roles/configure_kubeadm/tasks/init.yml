@@ -1,0 +1,43 @@
+---
+- name: Verifier si le cluster est deja initialise
+  ansible.builtin.stat:
+    path: /etc/kubernetes/admin.conf
+  register: kubeadm_already_init
+
+- name: Initialiser le cluster avec kubeadm
+  ansible.builtin.command:
+    cmd: kubeadm init --pod-network-cidr=192.168.0.0/16
+  when: not kubeadm_already_init.stat.exists
+
+- name: Creer le repertoire .kube
+  ansible.builtin.file:
+    path: /root/.kube
+    state: directory
+    mode: "0755"
+
+- name: Copier admin.conf dans .kube/config
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /root/.kube/config
+    remote_src: true
+    mode: "0600"
+
+- name: Installer le CNI Calico
+  ansible.builtin.command:
+    cmd: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.3/manifests/calico.yaml
+  when: not kubeadm_already_init.stat.exists
+
+- name: Retirer le taint control-plane
+  ansible.builtin.command:
+    cmd: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+  failed_when: false
+
+- name: Generer la commande de join
+  ansible.builtin.command:
+    cmd: kubeadm token create --print-join-command
+  register: join_command_result
+  changed_when: false
+
+- name: Stocker la commande de join
+  ansible.builtin.set_fact:
+    join_command: "{{ join_command_result.stdout }}"

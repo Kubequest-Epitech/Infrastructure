@@ -1,4 +1,4 @@
-#!/home/debian/kubequest/Infrastructure/ansible/.venv/bin/python3
+#!/Users/marine/code/Epitech/Kubquest_Epitech/Infrastructure/ansible/.venv/bin/python3.14
 # PYTHON_ARGCOMPLETE_OK
 """Command line entry point for ansible-test."""
 

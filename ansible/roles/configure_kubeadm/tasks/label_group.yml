@@ -1,0 +1,9 @@
+---
+- name: Label {{ node }} comme {{ item.value }}
+  ansible.builtin.command:
+    cmd: kubectl label node {{ hostvars[node]['ansible_fqdn'] }} node-role.kubernetes.io/{{ item.value }}= --overwrite
+  loop: "{{ groups[item.key] }}"
+  loop_control:
+    loop_var: node
+    label: "{{ node }}"
+  changed_when: true

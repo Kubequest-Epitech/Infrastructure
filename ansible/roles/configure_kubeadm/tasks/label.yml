@@ -1,0 +1,6 @@
+---
+- name: Labeliser les nodes du groupe {{ item.key }}
+  ansible.builtin.include_tasks: label_group.yml
+  loop: "{{ node_labels | dict2items }}"
+  loop_control:
+    label: "{{ item.key }} -> {{ item.value }}"
