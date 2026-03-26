@@ -8,7 +8,12 @@ VENV=.venv
 .PHONY: help install run reset
 
 install: ## Installer les dependances Ansible dans le venv
-	@$(VENV)/bin/pip install -r requirements.txt
+	@if ! $(VENV)/bin/python3 --version >/dev/null 2>&1; then \
+		echo "Creating virtual environment..."; \
+		rm -rf $(VENV); \
+		python3 -m venv $(VENV); \
+	fi
+	@$(VENV)/bin/pip install -q -r requirements.txt
 
 help: ## Afficher cette aide
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
