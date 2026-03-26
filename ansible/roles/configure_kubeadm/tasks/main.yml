@@ -10,3 +10,7 @@
 - name: Labeliser les nodes
   ansible.builtin.include_tasks: label.yml
   when: inventory_hostname in groups['kube1']
+
+- name: Tainter les nodes dedies
+  ansible.builtin.include_tasks: taint.yml
+  when: inventory_hostname in groups['kube1']
