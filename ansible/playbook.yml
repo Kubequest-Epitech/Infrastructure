@@ -15,6 +15,13 @@
   roles:
     - configure_kubeadm
 
+- name: Deployer Kubernetes Dashboard
+  hosts: kube1
+  tags: dashboard
+  become: true
+  roles:
+    - kubernetes_dashboard
+
 - name: Supprimer le cluster Kubernetes
   hosts: kube_all
   tags:

@@ -5,7 +5,7 @@ INVENTORY=inventories/hosts
 PLAYBOOK=playbook.yml
 VENV=.venv
 
-.PHONY: help install run reset
+.PHONY: help install run reset dashboard
 
 install: ## Installer les dependances Ansible dans le venv
 	@if ! $(VENV)/bin/python3 --version >/dev/null 2>&1; then \
@@ -28,6 +28,17 @@ run: install ## Launch the playbook
 		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
 		echo "Running Ansible playbook..."; \
 		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK); \
+	'
+
+dashboard: install ## Deployer Kubernetes Dashboard
+	@echo "Starting ssh-agent with venv..."
+	@bash -c '\
+		eval "$$(ssh-agent -s)"; \
+		. $(VENV)/bin/activate; \
+		echo "Adding vaulted SSH key..."; \
+		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
+		echo "Deploying Kubernetes Dashboard..."; \
+		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags dashboard; \
 	'
 
 reset: install ## Supprimer le cluster Kubernetes (kubeadm reset)
