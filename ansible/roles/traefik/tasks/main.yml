@@ -1,0 +1,35 @@
+---
+- name: Ajouter le repo Helm Traefik
+  ansible.builtin.command:
+    cmd: helm repo add traefik https://traefik.github.io/charts
+  register: repo_add
+  changed_when: "'has been added' in repo_add.stdout"
+  failed_when: repo_add.rc != 0 and 'already exists' not in repo_add.stderr
+
+- name: Mettre a jour les repos Helm
+  ansible.builtin.command:
+    cmd: helm repo update
+  changed_when: false
+
+- name: Creer le namespace {{ traefik_namespace }}
+  ansible.builtin.command:
+    cmd: kubectl create namespace {{ traefik_namespace }}
+  register: ns_create
+  changed_when: "'created' in ns_create.stdout"
+  failed_when: ns_create.rc != 0 and 'already exists' not in ns_create.stderr
+
+- name: Copier les values Traefik sur le control plane
+  ansible.builtin.copy:
+    src: values.yml
+    dest: /tmp/traefik-values.yml
+    mode: "0644"
+
+- name: Deployer Traefik via Helm
+  ansible.builtin.command:
+    cmd: >
+      helm upgrade --install traefik traefik/traefik
+      --namespace {{ traefik_namespace }}
+      --version {{ traefik_chart_version }}
+      --values /tmp/traefik-values.yml
+  register: helm_install
+  changed_when: "'STATUS: deployed' in helm_install.stdout"
