@@ -1,0 +1,4 @@
+---
+dashboard_namespace: kubernetes-dashboard
+dashboard_chart_version: "7.12.0"
+dashboard_host: dashboard.kubequest.local
