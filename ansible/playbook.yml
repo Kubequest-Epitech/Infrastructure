@@ -23,6 +23,13 @@
     - install_helm
     - traefik
 
+- name: Installer ArgoCD sur le control-plane
+  hosts: kube1
+  tags: argocd
+  become: true
+  roles:
+    - argocd
+
 - name: Supprimer le cluster Kubernetes
   hosts: kube_all
   tags:

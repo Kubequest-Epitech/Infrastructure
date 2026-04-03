@@ -5,7 +5,7 @@ INVENTORY=inventories/hosts
 PLAYBOOK=playbook.yml
 VENV=.venv
 
-.PHONY: help install run reset traefik
+.PHONY: help install run reset traefik argocd argocd-password
 
 install: ## Installer les dependances Ansible dans le venv
 	@if ! $(VENV)/bin/python3 --version >/dev/null 2>&1; then \
@@ -39,6 +39,28 @@ traefik: install ## Deployer Traefik sur le node ingress
 		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
 		echo "Deploying Traefik..."; \
 		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags traefik; \
+	'
+
+argocd: install ## Deployer ArgoCD sur le control-plane
+	@echo "Starting ssh-agent with venv..."
+	@bash -c '\
+		eval "$$(ssh-agent -s)"; \
+		. $(VENV)/bin/activate; \
+		echo "Adding vaulted SSH key..."; \
+		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
+		echo "Deploying ArgoCD..."; \
+		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags argocd; \
+	'
+
+argocd-password: install ## Recuperer le mot de passe admin ArgoCD
+	@bash -c '\
+		eval "$$(ssh-agent -s)"; \
+		. $(VENV)/bin/activate; \
+		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
+		$(VENV)/bin/ansible -i $(INVENTORY) kube1 -b -a \
+			"kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath={.data.password}" \
+			2>/dev/null | tail -1 | base64 -d; \
+		echo; \
 	'
 
 reset: install ## Supprimer le cluster Kubernetes (kubeadm reset)

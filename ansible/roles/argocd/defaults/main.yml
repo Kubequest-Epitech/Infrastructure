@@ -1,0 +1,4 @@
+---
+argocd_namespace: argocd
+argocd_chart_version: "7.8.26"
+argocd_ingress_host: argocd.kubequest.local
