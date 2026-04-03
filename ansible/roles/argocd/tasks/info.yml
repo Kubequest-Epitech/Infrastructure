@@ -1,0 +1,41 @@
+---
+- name: Retrieve ArgoCD admin password
+  ansible.builtin.command:
+    cmd: kubectl -n {{ argocd_namespace }} get secret argocd-initial-admin-secret -o jsonpath="{.data.password}"
+  register: argocd_secret
+  changed_when: false
+
+- name: Decode password
+  ansible.builtin.set_fact:
+    argocd_password: "{{ argocd_secret.stdout | b64decode }}"
+
+- name: Retrieve cluster nodes
+  ansible.builtin.command:
+    cmd: kubectl get nodes -o custom-columns=NAME:.metadata.name,STATUS:.status.conditions[-1].type,ROLE:.metadata.labels.node-role\.kubernetes\.io,IP:.status.addresses[0].address --no-headers -A
+  register: cluster_nodes
+  changed_when: false
+
+- name: ""
+  ansible.builtin.pause:
+    seconds: 1
+    prompt: |
+
+      ======================================================
+                    CLUSTER KUBEQUEST - INFO
+      ======================================================
+
+      NODES:
+      {{ cluster_nodes.stdout }}
+
+      ARGOCD:
+        Dashboard : https://{{ argocd_ingress_host }}
+        User      : admin
+        Password  : {{ argocd_password }}
+        Alias SSH : kubquest-argo (on K1)
+        Command   : make argocd-password (from your machine)
+
+      LOCAL DNS (run once on your machine):
+        Mac/Linux : sudo sh -c 'echo "{{ hostvars[groups['ingress'][0]]['inventory_hostname'] }} {{ argocd_ingress_host }}" >> /etc/hosts'
+        Windows   : Add "{{ hostvars[groups['ingress'][0]]['inventory_hostname'] }} {{ argocd_ingress_host }}" to C:\Windows\System32\drivers\etc\hosts
+
+      ======================================================
