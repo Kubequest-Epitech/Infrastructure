@@ -8,10 +8,10 @@ monitoring
 ec2-3-254-21-149.eu-west-1.compute.amazonaws.com
 
 [kube2]
-ec2-34-254-190-170.eu-west-1.compute.amazonaws.com
+ec2-34-247-69-57.eu-west-1.compute.amazonaws.com
 
 [ingress]
-ec2-108-131-215-24.eu-west-1.compute.amazonaws.com
+ec2-108-129-115-14.eu-west-1.compute.amazonaws.com
 
 [monitoring]
-ec2-34-244-173-3.eu-west-1.compute.amazonaws.com
+ec2-108-130-96-89.eu-west-1.compute.amazonaws.com
