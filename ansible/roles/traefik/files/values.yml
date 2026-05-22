@@ -1,12 +1,3 @@
-nodeSelector:
-  node-role.kubernetes.io/ingress: ""
-
-tolerations:
-  - key: "dedicated"
-    operator: "Equal"
-    value: "ingress"
-    effect: "NoSchedule"
-
 service:
   type: ClusterIP
 
