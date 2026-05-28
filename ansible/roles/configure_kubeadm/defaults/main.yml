@@ -2,8 +2,4 @@
 node_labels:
   workers: worker
 
-ingress_node_group: workers
-ingress_node_index: 0
-ingress_node_label: ingress
-
 node_taints: {}

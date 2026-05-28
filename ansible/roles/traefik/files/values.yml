@@ -1,8 +1,8 @@
+deployment:
+  kind: DaemonSet
+
 service:
   type: ClusterIP
-
-nodeSelector:
-  node-role.kubernetes.io/ingress: ""
 
 ports:
   web:

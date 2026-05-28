@@ -86,16 +86,17 @@ argocd-password: install ## Recuperer le mot de passe admin ArgoCD
 	'
 
 dns: ## Afficher la commande pour configurer le DNS local (/etc/hosts)
-	@INGRESS_HOST=$$(awk '/^\[workers\]/{getline; print; exit}' $(INVENTORY)); \
-	INGRESS_IP=$$(dig +short $$INGRESS_HOST 2>/dev/null || nslookup $$INGRESS_HOST 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | tail -1); \
+	@WORKER_IP=$$(awk '/^\[workers\]/{getline; print; exit}' $(INVENTORY)); \
+	IP=$$(dig +short $$WORKER_IP 2>/dev/null || nslookup $$WORKER_IP 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | tail -1); \
 	echo ""; \
-	echo "IP du node ingress ($$INGRESS_HOST) : $$INGRESS_IP"; \
+	echo "Traefik tourne sur tous les workers (DaemonSet)."; \
+	echo "N'importe quelle IP worker fonctionne. IP utilisee : $$IP ($$WORKER_IP)"; \
 	echo ""; \
 	echo "Executez la commande correspondant a votre OS :"; \
 	echo ""; \
-	echo "  Mac     : sudo sed -i '' '/kubequest.local/d' /etc/hosts && echo \"$$INGRESS_IP argocd.kubequest.local\" | sudo tee -a /etc/hosts"; \
-	echo "  Linux   : sudo sed -i '/kubequest.local/d' /etc/hosts && echo \"$$INGRESS_IP argocd.kubequest.local\" | sudo tee -a /etc/hosts"; \
-	echo "  Windows : powershell -Command \"(Get-Content C:\Windows\System32\drivers\etc\hosts | Where-Object { \$$_ -notmatch 'kubequest.local' }) + '$$INGRESS_IP argocd.kubequest.local' | Set-Content C:\Windows\System32\drivers\etc\hosts\" (run as Admin)"; \
+	echo "  Mac     : sudo sed -i '' '/kubequest.local/d' /etc/hosts && echo \"$$IP argocd.kubequest.local\" | sudo tee -a /etc/hosts"; \
+	echo "  Linux   : sudo sed -i '/kubequest.local/d' /etc/hosts && echo \"$$IP argocd.kubequest.local\" | sudo tee -a /etc/hosts"; \
+	echo "  Windows : powershell -Command \"(Get-Content C:\Windows\System32\drivers\etc\hosts | Where-Object { \$$_ -notmatch 'kubequest.local' }) + '$$IP argocd.kubequest.local' | Set-Content C:\Windows\System32\drivers\etc\hosts\" (run as Admin)"; \
 	echo ""
 
 reset: install ## Supprimer le cluster Kubernetes (kubeadm reset)

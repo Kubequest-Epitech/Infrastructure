@@ -12,17 +12,17 @@
   ansible.builtin.set_fact:
     argocd_password: "{{ argocd_secret.stdout | b64decode }}"
 
-- name: Resolve ingress node IP
+- name: Resolve worker node IP (any worker has Traefik via DaemonSet)
   ansible.builtin.command:
     cmd: dig +short {{ hostvars[groups['workers'][0]]['inventory_hostname'] }}
-  register: ingress_ip_result
+  register: worker_ip_result
   changed_when: false
   delegate_to: localhost
   become: false
 
-- name: Set ingress IP
+- name: Set worker IP
   ansible.builtin.set_fact:
-    ingress_ip: "{{ ingress_ip_result.stdout | trim }}"
+    ingress_ip: "{{ worker_ip_result.stdout | trim }}"
 
 - name: Retrieve cluster nodes
   ansible.builtin.command:
