@@ -12,6 +12,18 @@
   ansible.builtin.set_fact:
     argocd_password: "{{ argocd_secret.stdout | b64decode }}"
 
+- name: Resolve ingress node IP
+  ansible.builtin.command:
+    cmd: dig +short {{ hostvars[groups['ingress'][0]]['inventory_hostname'] }}
+  register: ingress_ip_result
+  changed_when: false
+  delegate_to: localhost
+  become: false
+
+- name: Set ingress IP
+  ansible.builtin.set_fact:
+    ingress_ip: "{{ ingress_ip_result.stdout | trim }}"
+
 - name: Retrieve cluster nodes
   ansible.builtin.command:
     cmd: >
@@ -40,8 +52,11 @@
         Alias SSH : kubquest-argo (on K1)
         Command   : make argocd-password (from your machine)
 
-      LOCAL DNS (run once on your machine):
-        Mac/Linux : sudo sh -c 'echo "{{ hostvars[groups['ingress'][0]]['inventory_hostname'] }} {{ argocd_ingress_host }}" >> /etc/hosts'
-        Windows   : Add "{{ hostvars[groups['ingress'][0]]['inventory_hostname'] }} {{ argocd_ingress_host }}" to C:\Windows\System32\drivers\etc\hosts
+      LOCAL DNS (run on your machine if IP changed):
+        make dns
+        -- or manually --
+        Mac     : sudo sed -i '' '/kubequest.local/d' /etc/hosts && echo "{{ ingress_ip }} {{ argocd_ingress_host }}" | sudo tee -a /etc/hosts
+        Linux   : sudo sed -i '/kubequest.local/d' /etc/hosts && echo "{{ ingress_ip }} {{ argocd_ingress_host }}" | sudo tee -a /etc/hosts
+        Windows : powershell -Command "(Get-Content C:\Windows\System32\drivers\etc\hosts | Where-Object { $_ -notmatch 'kubequest.local' }) + '{{ ingress_ip }} {{ argocd_ingress_host }}' | Set-Content C:\Windows\System32\drivers\etc\hosts" (run as Admin)
 
       ======================================================

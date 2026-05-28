@@ -5,7 +5,7 @@ INVENTORY=inventories/hosts
 PLAYBOOK=playbook.yml
 VENV=.venv
 
-.PHONY: help install run reset traefik argocd argocd-password
+.PHONY: help install run reset traefik argocd argocd-password dns
 
 install: ## Installer les dependances Ansible dans le venv
 	@if ! $(VENV)/bin/python3 --version >/dev/null 2>&1; then \
@@ -62,6 +62,19 @@ argocd-password: install ## Recuperer le mot de passe admin ArgoCD
 			2>/dev/null | tail -1 | base64 -d; \
 		echo; \
 	'
+
+dns: ## Afficher la commande pour configurer le DNS local (/etc/hosts)
+	@INGRESS_HOST=$$(grep -A1 '\[ingress\]' $(INVENTORY) | tail -1); \
+	INGRESS_IP=$$(dig +short $$INGRESS_HOST 2>/dev/null || nslookup $$INGRESS_HOST 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | tail -1); \
+	echo ""; \
+	echo "IP du node ingress ($$INGRESS_HOST) : $$INGRESS_IP"; \
+	echo ""; \
+	echo "Executez la commande correspondant a votre OS :"; \
+	echo ""; \
+	echo "  Mac     : sudo sed -i '' '/kubequest.local/d' /etc/hosts && echo \"$$INGRESS_IP argocd.kubequest.local\" | sudo tee -a /etc/hosts"; \
+	echo "  Linux   : sudo sed -i '/kubequest.local/d' /etc/hosts && echo \"$$INGRESS_IP argocd.kubequest.local\" | sudo tee -a /etc/hosts"; \
+	echo "  Windows : powershell -Command \"(Get-Content C:\Windows\System32\drivers\etc\hosts | Where-Object { \$$_ -notmatch 'kubequest.local' }) + '$$INGRESS_IP argocd.kubequest.local' | Set-Content C:\Windows\System32\drivers\etc\hosts\" (run as Admin)"; \
+	echo ""
 
 reset: install ## Supprimer le cluster Kubernetes (kubeadm reset)
 	@echo "Starting ssh-agent with venv..."
