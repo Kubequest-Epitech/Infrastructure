@@ -1,21 +1,27 @@
 ---
 - name: Retrieve ArgoCD admin password
   ansible.builtin.command:
-    cmd: kubectl -n {{ argocd_namespace }} get secret argocd-initial-admin-secret -o jsonpath="{.data.password}"
+    cmd: >
+      kubectl -n {{ argocd_namespace }} get secret
+      argocd-initial-admin-secret
+      -o jsonpath="{.data.password}"
   register: argocd_secret
   changed_when: false
 
-- name: Decode password
+- name: Decode ArgoCD password
   ansible.builtin.set_fact:
     argocd_password: "{{ argocd_secret.stdout | b64decode }}"
 
 - name: Retrieve cluster nodes
   ansible.builtin.command:
-    cmd: kubectl get nodes -o custom-columns=NAME:.metadata.name,STATUS:.status.conditions[-1].type,ROLE:.metadata.labels.node-role\.kubernetes\.io,IP:.status.addresses[0].address --no-headers -A
-  register: cluster_nodes
+    cmd: >
+      kubectl get nodes
+      -o custom-columns=NAME:.metadata.name,STATUS:.status.conditions[-1].type,IP:.status.addresses[0].address
+      --no-headers -A
+  register: argocd_cluster_nodes
   changed_when: false
 
-- name: ""
+- name: Display cluster info
   ansible.builtin.pause:
     seconds: 1
     prompt: |
@@ -25,7 +31,7 @@
       ======================================================
 
       NODES:
-      {{ cluster_nodes.stdout }}
+      {{ argocd_cluster_nodes.stdout }}
 
       ARGOCD:
         Dashboard : https://{{ argocd_ingress_host }}
