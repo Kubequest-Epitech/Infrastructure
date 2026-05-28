@@ -5,7 +5,7 @@ INVENTORY=inventories/hosts
 PLAYBOOK=playbook.yml
 VENV=.venv
 
-.PHONY: help install run reset traefik argocd argocd-password dns
+.PHONY: help install run reset traefik argocd argocd-password kubeconfig tunnel dns
 
 install: ## Installer les dependances Ansible dans le venv
 	@if ! $(VENV)/bin/python3 --version >/dev/null 2>&1; then \
@@ -30,7 +30,7 @@ run: install ## Launch the playbook
 		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK); \
 	'
 
-traefik: install ## Deployer Traefik sur le node ingress
+traefik: install ## Deployer Traefik sur le cluster
 	@echo "Starting ssh-agent with venv..."
 	@bash -c '\
 		eval "$$(ssh-agent -s)"; \
@@ -52,6 +52,28 @@ argocd: install ## Deployer ArgoCD sur le control-plane
 		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags argocd; \
 	'
 
+kubeconfig: install ## Recuperer le kubeconfig du cluster dans ~/.kube/config-kubequest
+	@echo "Starting ssh-agent with venv..."
+	@bash -c '\
+		eval "$$(ssh-agent -s)"; \
+		. $(VENV)/bin/activate; \
+		echo "Adding vaulted SSH key..."; \
+		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
+		echo "Fetching kubeconfig..."; \
+		$(VENV)/bin/ansible-playbook -i $(INVENTORY) fetch-kubeconfig.yml; \
+	'
+
+tunnel: install ## Ouvrir un tunnel SSH vers l'API server (port 6443) - laisser tourner
+	@bash -c '\
+		eval "$$(ssh-agent -s)" >/dev/null; \
+		. $(VENV)/bin/activate; \
+		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add - 2>/dev/null; \
+		KUBE1=$$(awk "/^\[kube1\]/{getline; print; exit}" $(INVENTORY)); \
+		echo "Tunnel SSH actif vers $$KUBE1:6443 -> localhost:6443"; \
+		echo "Laisser ce terminal ouvert. Ctrl+C pour fermer."; \
+		ssh -N -L 6443:localhost:6443 ec2-user@$$KUBE1; \
+	'
+
 argocd-password: install ## Recuperer le mot de passe admin ArgoCD
 	@bash -c '\
 		eval "$$(ssh-agent -s)"; \
@@ -64,7 +86,7 @@ argocd-password: install ## Recuperer le mot de passe admin ArgoCD
 	'
 
 dns: ## Afficher la commande pour configurer le DNS local (/etc/hosts)
-	@INGRESS_HOST=$$(grep -A1 '\[ingress\]' $(INVENTORY) | tail -1); \
+	@INGRESS_HOST=$$(awk '/^\[workers\]/{getline; print; exit}' $(INVENTORY)); \
 	INGRESS_IP=$$(dig +short $$INGRESS_HOST 2>/dev/null || nslookup $$INGRESS_HOST 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | tail -1); \
 	echo ""; \
 	echo "IP du node ingress ($$INGRESS_HOST) : $$INGRESS_IP"; \

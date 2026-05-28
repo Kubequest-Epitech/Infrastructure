@@ -14,7 +14,7 @@
 
 - name: Resolve ingress node IP
   ansible.builtin.command:
-    cmd: dig +short {{ hostvars[groups['ingress'][0]]['inventory_hostname'] }}
+    cmd: dig +short {{ hostvars[groups['workers'][0]]['inventory_hostname'] }}
   register: ingress_ip_result
   changed_when: false
   delegate_to: localhost

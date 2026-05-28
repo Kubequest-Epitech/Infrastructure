@@ -6,9 +6,11 @@ global:
   nodeSelector:
     node-role.kubernetes.io/control-plane: ""
 
+configs:
+  params:
+    server.insecure: true
+
 server:
-  extraArgs:
-    - --insecure
   ingress:
     enabled: true
     ingressClassName: traefik
