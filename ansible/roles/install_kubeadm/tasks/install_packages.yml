@@ -1,27 +1,27 @@
 ---
 - name: Ajouter le repo Kubernetes
   become: true
-  yum_repository:
+  ansible.builtin.yum_repository:
     name: kubernetes
     description: Kubernetes
-    baseurl: "https://pkgs.k8s.io/core:/stable:/v{{ kube_version }}/rpm/"
+    baseurl: "https://pkgs.k8s.io/core:/stable:/v{{ install_kubeadm_kube_version }}/rpm/"
     gpgcheck: true
-    gpgkey: "https://pkgs.k8s.io/core:/stable:/v{{ kube_version }}/rpm/repodata/repomd.xml.key"
+    gpgkey: "https://pkgs.k8s.io/core:/stable:/v{{ install_kubeadm_kube_version }}/rpm/repodata/repomd.xml.key"
     enabled: true
 
 - name: Installer kubeadm, kubelet et kubectl
   become: true
-  yum:
+  ansible.builtin.dnf:
     name:
-      - "kubeadm-{{ kube_version }}.*"
-      - "kubelet-{{ kube_version }}.*"
-      - "kubectl-{{ kube_version }}.*"
+      - "kubeadm-{{ install_kubeadm_kube_version }}.*"
+      - "kubelet-{{ install_kubeadm_kube_version }}.*"
+      - "kubectl-{{ install_kubeadm_kube_version }}.*"
     state: present
     disable_excludes: kubernetes
 
 - name: Activer et demarrer kubelet
   become: true
-  systemd:
+  ansible.builtin.systemd:
     name: kubelet
     enabled: true
     state: started

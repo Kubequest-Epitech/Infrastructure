@@ -2,9 +2,9 @@
 - name: Add ArgoCD Helm repo
   ansible.builtin.command:
     cmd: helm repo add argo https://argoproj.github.io/argo-helm
-  register: repo_add
-  changed_when: "'has been added' in repo_add.stdout"
-  failed_when: repo_add.rc != 0 and 'already exists' not in repo_add.stderr
+  register: argocd_repo_add
+  changed_when: "'has been added' in argocd_repo_add.stdout"
+  failed_when: argocd_repo_add.rc != 0 and 'already exists' not in argocd_repo_add.stderr
 
 - name: Update Helm repos
   ansible.builtin.command:
@@ -14,9 +14,9 @@
 - name: Create namespace {{ argocd_namespace }}
   ansible.builtin.command:
     cmd: kubectl create namespace {{ argocd_namespace }}
-  register: ns_create
-  changed_when: "'created' in ns_create.stdout"
-  failed_when: ns_create.rc != 0 and 'already exists' not in ns_create.stderr
+  register: argocd_ns_create
+  changed_when: "'created' in argocd_ns_create.stdout"
+  failed_when: argocd_ns_create.rc != 0 and 'already exists' not in argocd_ns_create.stderr
 
 - name: Copy ArgoCD values to control plane
   ansible.builtin.copy:
@@ -31,8 +31,8 @@
       --namespace {{ argocd_namespace }}
       --version {{ argocd_chart_version }}
       --values /tmp/argocd-values.yml
-  register: helm_install
-  changed_when: "'STATUS: deployed' in helm_install.stdout"
+  register: argocd_helm_install
+  changed_when: "'STATUS: deployed' in argocd_helm_install.stdout"
 
 - name: Wait for ArgoCD to be ready
   ansible.builtin.command:
