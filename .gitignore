@@ -2,3 +2,6 @@
 venv/
 
 CLAUDE.md
+
+.claude/
+docs/
