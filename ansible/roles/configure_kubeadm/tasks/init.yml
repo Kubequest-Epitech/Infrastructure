@@ -6,7 +6,10 @@
 
 - name: Initialiser le cluster avec kubeadm
   ansible.builtin.command:
-    cmd: kubeadm init --pod-network-cidr=192.168.0.0/16
+    cmd: >
+      kubeadm init
+      --pod-network-cidr=192.168.0.0/16
+      --apiserver-cert-extra-sans={{ inventory_hostname }},127.0.0.1
   when: not kubeadm_already_init.stat.exists
 
 - name: Creer le repertoire .kube

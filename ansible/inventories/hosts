@@ -1,17 +1,11 @@
 [kube_all:children]
 kube1
-kube2
-ingress
-monitoring
+workers
 
 [kube1]
 ec2-3-254-21-149.eu-west-1.compute.amazonaws.com
 
-[kube2]
-ec2-3-251-81-80.eu-west-1.compute.amazonaws.com
-
-[ingress]
-ec2-3-250-34-238.eu-west-1.compute.amazonaws.com
-
-[monitoring]
-ec2-54-247-52-244.eu-west-1.compute.amazonaws.com
+[workers]
+ec2-54-75-6-111.eu-west-1.compute.amazonaws.com
+ec2-34-253-59-50.eu-west-1.compute.amazonaws.com
+ec2-34-254-89-209.eu-west-1.compute.amazonaws.com

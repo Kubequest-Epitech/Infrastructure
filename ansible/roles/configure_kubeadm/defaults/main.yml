@@ -1,9 +1,5 @@
 ---
 node_labels:
-  kube2: worker
-  ingress: ingress
-  monitoring: monitoring
+  workers: worker
 
-node_taints:
-  ingress: "dedicated=ingress:NoSchedule"
-  monitoring: "dedicated=monitoring:NoSchedule"
+node_taints: {}

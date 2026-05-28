@@ -35,7 +35,7 @@
         Command   : make argocd-password (from your machine)
 
       LOCAL DNS (run once on your machine):
-        Mac/Linux : sudo sh -c 'echo "{{ hostvars[groups['ingress'][0]]['inventory_hostname'] }} {{ argocd_ingress_host }}" >> /etc/hosts'
-        Windows   : Add "{{ hostvars[groups['ingress'][0]]['inventory_hostname'] }} {{ argocd_ingress_host }}" to C:\Windows\System32\drivers\etc\hosts
+        Mac/Linux : sudo sh -c 'echo "{{ hostvars[groups['workers'][0]]['inventory_hostname'] }} {{ argocd_ingress_host }}" >> /etc/hosts'
+        Windows   : Add "{{ hostvars[groups['workers'][0]]['inventory_hostname'] }} {{ argocd_ingress_host }}" to C:\Windows\System32\drivers\etc\hosts
 
       ======================================================
