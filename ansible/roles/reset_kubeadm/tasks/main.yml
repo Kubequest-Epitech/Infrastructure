@@ -30,6 +30,7 @@
   loop_control:
     label: "{{ item }}"
   failed_when: false
+  changed_when: true
   when: inventory_hostname in groups['kube1']
 
 - name: Supprimer les nodes du cluster
@@ -39,17 +40,20 @@
   loop_control:
     label: "{{ item }}"
   failed_when: false
+  changed_when: true
   when: inventory_hostname in groups['kube1']
 
 - name: Reset kubeadm sur les workers
   ansible.builtin.command:
     cmd: kubeadm reset -f
   when: inventory_hostname not in groups['kube1']
+  changed_when: true
 
 - name: Reset kubeadm sur le control plane
   ansible.builtin.command:
     cmd: kubeadm reset -f
   when: inventory_hostname in groups['kube1']
+  changed_when: true
 
 - name: Supprimer le repertoire .kube
   ansible.builtin.file:

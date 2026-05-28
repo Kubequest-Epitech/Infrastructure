@@ -1,0 +1,5 @@
+---
+exclude_paths:
+  - .travis.yml
+  - roles/install_kubeadm/tests/
+  - roles/install_kubeadm/.travis.yml

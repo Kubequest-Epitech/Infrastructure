@@ -2,7 +2,7 @@
 - name: Verifier si Helm est installe
   ansible.builtin.command:
     cmd: helm version --short
-  register: helm_check
+  register: install_helm_check
   failed_when: false
   changed_when: false
 
@@ -11,9 +11,10 @@
     url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
     dest: /tmp/get_helm.sh
     mode: "0755"
-  when: helm_check.rc != 0
+  when: install_helm_check.rc != 0
 
 - name: Installer Helm
   ansible.builtin.command:
     cmd: /tmp/get_helm.sh
-  when: helm_check.rc != 0
+  when: install_helm_check.rc != 0
+  changed_when: true

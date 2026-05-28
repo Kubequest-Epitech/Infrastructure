@@ -1,5 +1,5 @@
 ---
-node_labels:
+configure_kubeadm_node_labels:
   workers: worker
 
-node_taints: {}
+configure_kubeadm_node_taints: {}
