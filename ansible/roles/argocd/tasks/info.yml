@@ -15,14 +15,14 @@
 - name: Resolve worker node IP (any worker has Traefik via DaemonSet)
   ansible.builtin.command:
     cmd: dig +short {{ hostvars[groups['workers'][0]]['inventory_hostname'] }}
-  register: worker_ip_result
+  register: argocd_worker_ip_result
   changed_when: false
   delegate_to: localhost
   become: false
 
 - name: Set worker IP
   ansible.builtin.set_fact:
-    ingress_ip: "{{ worker_ip_result.stdout | trim }}"
+    argocd_ingress_ip: "{{ argocd_worker_ip_result.stdout | trim }}"
 
 - name: Retrieve cluster nodes
   ansible.builtin.command:
@@ -55,8 +55,8 @@
       LOCAL DNS (run on your machine if IP changed):
         make dns
         -- or manually --
-        Mac     : sudo sed -i '' '/kubequest.local/d' /etc/hosts && echo "{{ ingress_ip }} {{ argocd_ingress_host }}" | sudo tee -a /etc/hosts
-        Linux   : sudo sed -i '/kubequest.local/d' /etc/hosts && echo "{{ ingress_ip }} {{ argocd_ingress_host }}" | sudo tee -a /etc/hosts
-        Windows : powershell -Command "(Get-Content C:\Windows\System32\drivers\etc\hosts | Where-Object { $_ -notmatch 'kubequest.local' }) + '{{ ingress_ip }} {{ argocd_ingress_host }}' | Set-Content C:\Windows\System32\drivers\etc\hosts" (run as Admin)
+        Mac     : sudo sed -i '' '/kubequest.local/d' /etc/hosts && echo "{{ argocd_ingress_ip }} {{ argocd_ingress_host }}" | sudo tee -a /etc/hosts
+        Linux   : sudo sed -i '/kubequest.local/d' /etc/hosts && echo "{{ argocd_ingress_ip }} {{ argocd_ingress_host }}" | sudo tee -a /etc/hosts
+        Windows : Edit C:\Windows\System32\drivers\etc\hosts (as Admin), add: {{ argocd_ingress_ip }} {{ argocd_ingress_host }}
 
       ======================================================
