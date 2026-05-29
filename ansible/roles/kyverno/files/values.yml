@@ -1,0 +1,32 @@
+admissionController:
+  replicas: 1
+  tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: ""
+
+backgroundController:
+  tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: ""
+
+cleanupController:
+  tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: ""
+
+reportsController:
+  tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: ""
