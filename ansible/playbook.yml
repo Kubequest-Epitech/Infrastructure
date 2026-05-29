@@ -30,6 +30,13 @@
   roles:
     - argocd
 
+- name: Installer Kyverno et ses policies de securite
+  hosts: kube1
+  tags: kyverno
+  become: true
+  roles:
+    - kyverno
+
 - name: Supprimer le cluster Kubernetes
   hosts: kube_all
   tags:
