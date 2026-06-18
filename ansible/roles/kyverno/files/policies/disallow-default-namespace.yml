@@ -1,0 +1,32 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-default-namespace
+  annotations:
+    policies.kyverno.io/title: Disallow deployments in default namespace
+    policies.kyverno.io/category: Multi-Tenancy
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Interdit le deploiement de pods dans le namespace 'default'. Chaque
+      equipe ou application doit utiliser un namespace dedie pour faciliter
+      l'isolation, le RBAC et l'observabilite.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: block-default-ns
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: >-
+          Le deploiement dans le namespace 'default' est interdit.
+          Creez un namespace dedie pour votre application.
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.object.metadata.namespace }}"
+                operator: Equals
+                value: default

@@ -15,6 +15,17 @@
   roles:
     - configure_kubeadm
 
+- name: Creer les Secrets Kubernetes (donnees sensibles)
+  hosts: kube1
+  tags:
+    - secrets
+    - never
+  become: true
+  vars_files:
+    - secrets/app-secrets.yml
+  roles:
+    - secrets
+
 - name: Installer Helm et deployer Traefik
   hosts: kube1
   tags: traefik
@@ -30,16 +41,12 @@
   roles:
     - argocd
 
-- name: Creer les Secrets Kubernetes (donnees sensibles)
+- name: Installer Kyverno et ses policies de securite
   hosts: kube1
-  tags:
-    - secrets
-    - never
+  tags: kyverno
   become: true
-  vars_files:
-    - secrets/app-secrets.yml
   roles:
-    - secrets
+    - kyverno
 
 - name: Supprimer le cluster Kubernetes
   hosts: kube_all
