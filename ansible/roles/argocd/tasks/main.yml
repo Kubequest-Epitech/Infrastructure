@@ -43,6 +43,26 @@
       --timeout=180s
   changed_when: false
 
+- name: Create ArgoCD repository credentials for nex-application
+  ansible.builtin.command:
+    cmd: kubectl -n {{ argocd_namespace }} apply -f -
+    stdin: "{{ lookup('template', 'nex-repo-secret.yml.j2') }}"
+  register: argocd_repo_secret_apply
+  changed_when: "'created' in argocd_repo_secret_apply.stdout or 'configured' in argocd_repo_secret_apply.stdout"
+  no_log: true
+
+- name: Copy nex-application Application manifest to control plane
+  ansible.builtin.copy:
+    src: nex-application.yml
+    dest: /tmp/nex-application.yml
+    mode: "0644"
+
+- name: Create nex-application Application in ArgoCD
+  ansible.builtin.command:
+    cmd: kubectl apply -f /tmp/nex-application.yml
+  register: argocd_nex_apply
+  changed_when: "'created' in argocd_nex_apply.stdout or 'configured' in argocd_nex_apply.stdout"
+
 - name: Add kubquest-argo alias to retrieve admin password
   ansible.builtin.lineinfile:
     path: /home/ec2-user/.bashrc

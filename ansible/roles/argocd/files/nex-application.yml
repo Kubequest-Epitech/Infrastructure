@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nex-application
+  namespace: argocd
+spec:
+  project: default
+  source:
+    # Repo prive : les credentials seront ajoutes plus tard (vault pas pret).
+    # Pour l'instant l'Application est creee mais ne pourra pas se synchroniser.
+    repoURL: https://github.com/Kubequest-Epitech/nex-application.git
+    targetRevision: main
+    path: helm
+  destination:
+    server: https://kubernetes.default.svc
+    # Namespace dedie : le ns 'default' est interdit par la policy Kyverno.
+    namespace: application
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

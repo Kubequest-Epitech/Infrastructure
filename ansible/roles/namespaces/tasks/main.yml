@@ -1,0 +1,14 @@
+---
+- name: Créer le namespace ArgoCD
+  ansible.builtin.command:
+    cmd: kubectl create namespace {{ argocd_namespace }}
+  register: ns_argocd
+  changed_when: "'created' in ns_argocd.stdout"
+  failed_when: ns_argocd.rc != 0 and 'already exists' not in ns_argocd.stderr
+
+- name: Créer le namespace de l'application
+  ansible.builtin.command:
+    cmd: kubectl create namespace {{ application_namespace }}
+  register: ns_app
+  changed_when: "'created' in ns_app.stdout"
+  failed_when: ns_app.rc != 0 and 'already exists' not in ns_app.stderr

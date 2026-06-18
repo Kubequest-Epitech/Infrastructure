@@ -15,12 +15,42 @@
   roles:
     - configure_kubeadm
 
-- name: Installer Helm et deployer Traefik
+- name: Creer les namespaces applicatifs
+  hosts: kube1
+  tags: namespaces
+  become: true
+  roles:
+    - namespaces
+
+# Helm est requis par kyverno, traefik et argocd : installe une seule fois,
+# avant tout le reste. Tag multiple pour que make kyverno/traefik/argocd
+# tirent l'installation de Helm au besoin.
+- name: Installer Helm
+  hosts: kube1
+  tags:
+    - helm
+    - kyverno
+    - traefik
+    - argocd
+  become: true
+  roles:
+    - install_helm
+
+# Kyverno AVANT traefik/argocd : les policies (corrigees + exclusions des ns
+# plateforme) sont en place avant que les composants ne s'installent, donc ils
+# passent l'admission. Rend make run idempotent (fresh install ET re-run).
+- name: Installer Kyverno et ses policies de securite
+  hosts: kube1
+  tags: kyverno
+  become: true
+  roles:
+    - kyverno
+
+- name: Deployer Traefik
   hosts: kube1
   tags: traefik
   become: true
   roles:
-    - install_helm
     - traefik
 
 - name: Installer ArgoCD sur le control-plane
@@ -29,13 +59,6 @@
   become: true
   roles:
     - argocd
-
-- name: Installer Kyverno et ses policies de securite
-  hosts: kube1
-  tags: kyverno
-  become: true
-  roles:
-    - kyverno
 
 - name: Supprimer le cluster Kubernetes
   hosts: kube_all

@@ -1,0 +1,10 @@
+---
+# Variables du groupe 'all' (format inventaire YAML).
+# IMPORTANT : ce fichier est charge comme SOURCE D'INVENTAIRE, donc les cles
+# de premier niveau doivent etre des GROUPES. Les variables vont OBLIGATOIREMENT
+# sous 'all:' -> 'vars:'. Si on les met a la racine, Ansible affiche
+# "not a valid group definition" et ne les charge pas.
+all:
+  vars:
+    argocd_namespace: "argocd"
+    application_namespace: "application"
