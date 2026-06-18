@@ -5,7 +5,7 @@ INVENTORY=inventories/hosts
 PLAYBOOK=playbook.yml
 VENV=.venv
 
-.PHONY: help install run reset traefik argocd argocd-password kubeconfig tunnel dns
+.PHONY: help install run reset traefik argocd secrets argocd-password kubeconfig tunnel dns
 
 install: ## Installer les dependances Ansible dans le venv
 	@if ! $(VENV)/bin/python3 --version >/dev/null 2>&1; then \
@@ -50,6 +50,17 @@ argocd: install ## Deployer ArgoCD sur le control-plane
 		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
 		echo "Deploying ArgoCD..."; \
 		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags argocd; \
+	'
+
+secrets: install ## Creer les Secrets Kubernetes (donnees sensibles) sur le control-plane
+	@echo "Starting ssh-agent with venv..."
+	@bash -c '\
+		eval "$$(ssh-agent -s)"; \
+		. $(VENV)/bin/activate; \
+		echo "Adding vaulted SSH key..."; \
+		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
+		echo "Creating Kubernetes Secrets..."; \
+		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags secrets --ask-vault-pass; \
 	'
 
 kubeconfig: install ## Recuperer le kubeconfig du cluster dans ~/.kube/config-kubequest

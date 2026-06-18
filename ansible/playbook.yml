@@ -30,6 +30,17 @@
   roles:
     - argocd
 
+- name: Creer les Secrets Kubernetes (donnees sensibles)
+  hosts: kube1
+  tags:
+    - secrets
+    - never
+  become: true
+  vars_files:
+    - secrets/app-secrets.yml
+  roles:
+    - secrets
+
 - name: Supprimer le cluster Kubernetes
   hosts: kube_all
   tags:
