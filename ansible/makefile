@@ -5,7 +5,7 @@ INVENTORY=inventories/hosts
 PLAYBOOK=playbook.yml
 VENV=.venv
 
-.PHONY: help install run reset traefik argocd argocd-password kubeconfig tunnel dns
+.PHONY: help install run reset traefik argocd argocd-password kubeconfig tunnel dns postgres
 
 install: ## Installer les dependances Ansible dans le venv
 	@if ! $(VENV)/bin/python3 --version >/dev/null 2>&1; then \
@@ -98,6 +98,17 @@ dns: ## Afficher la commande pour configurer le DNS local (/etc/hosts)
 	echo "  Linux   : sudo sed -i '/kubequest.local/d' /etc/hosts && echo \"$$IP argocd.kubequest.local\" | sudo tee -a /etc/hosts"; \
 	echo "  Windows : powershell -Command \"(Get-Content C:\Windows\System32\drivers\etc\hosts | Where-Object { \$$_ -notmatch 'kubequest.local' }) + '$$IP argocd.kubequest.local' | Set-Content C:\Windows\System32\drivers\etc\hosts\" (run as Admin)"; \
 	echo ""
+
+postgres: install ## Deployer PostgreSQL sur le cluster (namespace application)
+	@echo "Starting ssh-agent with venv..."
+	@bash -c '\
+		eval "$$(ssh-agent -s)"; \
+		. $(VENV)/bin/activate; \
+		echo "Adding vaulted SSH key..."; \
+		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
+		echo "Deploying PostgreSQL..."; \
+		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags postgres; \
+	'
 
 reset: install ## Supprimer le cluster Kubernetes (kubeadm reset)
 	@echo "Starting ssh-agent with venv..."
