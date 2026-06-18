@@ -8,3 +8,5 @@ all:
   vars:
     argocd_namespace: "argocd"
     application_namespace: "application"
+    traefik_namespace: "traefik"
+    kyverno_namespace: "kyverno"
