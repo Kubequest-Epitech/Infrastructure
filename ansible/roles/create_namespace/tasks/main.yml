@@ -1,0 +1,12 @@
+---
+- name: Copier le manifest du namespace
+  ansible.builtin.template:
+    src: namespace.yml
+    dest: /tmp/create-namespace.yml
+    mode: "0644"
+
+- name: Appliquer le namespace
+  ansible.builtin.command:
+    cmd: kubectl apply -f /tmp/create-namespace.yml
+  changed_when: false
+

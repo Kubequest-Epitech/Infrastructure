@@ -1,5 +1,4 @@
 ---
-
 - name: Preparation de tous les noeuds
   hosts: kube_all
   tags: preparation
@@ -25,6 +24,17 @@
 # Helm est requis par kyverno, traefik et argocd : installe une seule fois,
 # avant tout le reste. Tag multiple pour que make kyverno/traefik/argocd
 # tirent l'installation de Helm au besoin.
+- name: Creer les Secrets Kubernetes (donnees sensibles)
+  hosts: kube1
+  tags:
+    - secrets
+    - never
+  become: true
+  vars_files:
+    - secrets/app-secrets.yml
+  roles:
+    - secrets
+
 - name: Installer Helm
   hosts: kube1
   tags:
