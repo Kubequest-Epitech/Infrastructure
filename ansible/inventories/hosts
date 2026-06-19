@@ -2,10 +2,13 @@
 kube1
 workers
 
+[kube_all:vars]
+ansible_user=ec2-user
+
 [kube1]
 ec2-3-254-21-149.eu-west-1.compute.amazonaws.com
 
 [workers]
-ec2-108-130-248-163.eu-west-1.compute.amazonaws.com
-ec2-34-245-193-248.eu-west-1.compute.amazonaws.com
-ec2-34-248-218-245.eu-west-1.compute.amazonaws.com
+ec2-34-244-161-205.eu-west-1.compute.amazonaws.com
+ec2-108-129-154-150.eu-west-1.compute.amazonaws.com
+ec2-3-253-37-45.eu-west-1.compute.amazonaws.com

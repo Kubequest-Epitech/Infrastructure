@@ -1,0 +1,85 @@
+---
+- name: Labelliser argocd comme accessible par Traefik
+  ansible.builtin.command:
+    cmd: kubectl label namespace argocd network-policy/traefik-egress=true --overwrite
+  register: label_argocd
+  changed_when: "'labeled' in label_argocd.stdout"
+  failed_when: label_argocd.rc != 0 and 'not found' not in label_argocd.stderr
+
+- name: Verifier si le namespace traefik existe
+  ansible.builtin.command:
+    cmd: kubectl get namespace traefik
+  register: traefik_ns_check
+  failed_when: false
+  changed_when: false
+
+- name: Copier les NetworkPolicy Traefik sur le control plane
+  ansible.builtin.copy:
+    src: traefik/
+    dest: /tmp/network-policies-traefik/
+    mode: "0644"
+  when: traefik_ns_check.rc == 0
+
+- name: Appliquer les NetworkPolicy Traefik
+  ansible.builtin.command:
+    cmd: kubectl apply -f /tmp/network-policies-traefik/
+  register: traefik_np_apply
+  changed_when: "'created' in traefik_np_apply.stdout or 'configured' in traefik_np_apply.stdout"
+  when: traefik_ns_check.rc == 0
+
+- name: Namespace traefik absent - NetworkPolicy ignorees
+  ansible.builtin.debug:
+    msg: "Le namespace traefik n'existe pas, les NetworkPolicy Traefik sont ignorees."
+  when: traefik_ns_check.rc != 0
+
+- name: Verifier si le namespace argocd existe
+  ansible.builtin.command:
+    cmd: kubectl get namespace argocd
+  register: argocd_ns_check
+  failed_when: false
+  changed_when: false
+
+- name: Copier les NetworkPolicy ArgoCD sur le control plane
+  ansible.builtin.copy:
+    src: argocd/
+    dest: /tmp/network-policies-argocd/
+    mode: "0644"
+  when: argocd_ns_check.rc == 0
+
+- name: Appliquer les NetworkPolicy ArgoCD
+  ansible.builtin.command:
+    cmd: kubectl apply -f /tmp/network-policies-argocd/
+  register: argocd_np_apply
+  changed_when: "'created' in argocd_np_apply.stdout or 'configured' in argocd_np_apply.stdout"
+  when: argocd_ns_check.rc == 0
+
+- name: Namespace argocd absent - NetworkPolicy ignorees
+  ansible.builtin.debug:
+    msg: "Le namespace argocd n'existe pas, les NetworkPolicy ArgoCD sont ignorees."
+  when: argocd_ns_check.rc != 0
+
+- name: Verifier si le namespace kyverno existe
+  ansible.builtin.command:
+    cmd: kubectl get namespace kyverno
+  register: kyverno_ns_check
+  failed_when: false
+  changed_when: false
+
+- name: Copier les NetworkPolicy Kyverno sur le control plane
+  ansible.builtin.copy:
+    src: kyverno/
+    dest: /tmp/network-policies-kyverno/
+    mode: "0644"
+  when: kyverno_ns_check.rc == 0
+
+- name: Appliquer les NetworkPolicy Kyverno
+  ansible.builtin.command:
+    cmd: kubectl apply -f /tmp/network-policies-kyverno/
+  register: kyverno_np_apply
+  changed_when: "'created' in kyverno_np_apply.stdout or 'configured' in kyverno_np_apply.stdout"
+  when: kyverno_ns_check.rc == 0
+
+- name: Namespace kyverno absent - NetworkPolicy ignorees
+  ansible.builtin.debug:
+    msg: "Le namespace kyverno n'existe pas, les NetworkPolicy Kyverno sont ignorees."
+  when: kyverno_ns_check.rc != 0

@@ -37,6 +37,13 @@
   roles:
     - kyverno
 
+- name: Appliquer les NetworkPolicy pour isoler les namespaces
+  hosts: kube1
+  tags: network-policies
+  become: true
+  roles:
+    - network_policies
+
 - name: Supprimer le cluster Kubernetes
   hosts: kube_all
   tags:
