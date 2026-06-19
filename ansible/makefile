@@ -6,7 +6,7 @@ HOSTS=inventories/hosts
 PLAYBOOK=playbook.yml
 VENV=.venv
 
-.PHONY: help install run reset traefik argocd kyverno namespaces secrets argocd-password kubeconfig tunnel dns
+.PHONY: help install run reset traefik argocd app kyverno namespaces secrets argocd-password kubeconfig tunnel dns
 
 install: ## Installer les dependances Ansible dans le venv
 	@if ! $(VENV)/bin/python3 --version >/dev/null 2>&1; then \
@@ -28,7 +28,7 @@ run: install ## Launch the playbook
 		echo "Adding vaulted SSH key..."; \
 		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
 		echo "Running Ansible playbook..."; \
-		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK); \
+		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --ask-vault-pass; \
 	'
 
 traefik: install ## Deployer Traefik sur le cluster
@@ -51,6 +51,17 @@ argocd: install ## Deployer ArgoCD sur le control-plane
 		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
 		echo "Deploying ArgoCD..."; \
 		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags argocd; \
+	'
+
+app: install ## Redeployer l'app nex (re-apply Application ArgoCD + refresh)
+	@echo "Starting ssh-agent with venv..."
+	@bash -c '\
+		eval "$$(ssh-agent -s)"; \
+		. $(VENV)/bin/activate; \
+		echo "Adding vaulted SSH key..."; \
+		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
+		echo "Redeploying nex-application..."; \
+		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags app; \
 	'
 
 namespaces: install ## Creer les namespaces depuis inventories/all.yml

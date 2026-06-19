@@ -1,3 +1,6 @@
+# Pinning control-plane (choix assume) : ArgoCD co-localise avec l'API server.
+# /!\ Le control-plane (2 vCPU) doit etre assez gros, sinon etcd se fait
+# starver (cf. 29 restarts) -> il faudrait passer le control-plane a ~4 vCPU.
 global:
   tolerations:
     - key: "node-role.kubernetes.io/control-plane"
@@ -5,6 +8,13 @@ global:
       effect: "NoSchedule"
   nodeSelector:
     node-role.kubernetes.io/control-plane: ""
+
+# Hook pre-upgrade redis-secret-init desactive : il hang (job in-cluster sur un
+# cluster lent) et bloque tout l'upgrade. Le secret argocd-redis existe deja,
+# donc le hook est redondant. /!\ Sur un cluster NEUF, ce secret n'existerait
+# pas -> il faudrait reactiver ce hook (ou provisionner argocd-redis a la main).
+redisSecretInit:
+  enabled: false
 
 configs:
   params:

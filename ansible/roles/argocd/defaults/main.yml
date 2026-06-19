@@ -1,11 +1,3 @@
 ---
 argocd_chart_version: "7.8.26"
 argocd_ingress_host: argocd.kubequest.local
-
-# Acces au repo prive nex-application (credentials repo ArgoCD).
-# TODO: deplacer argocd_repo_password dans le vault (group_vars/vault) puis
-# le retirer d'ici. Les group_vars surchargent les defaults => transition simple.
-# /!\ Token provisoire et a revoquer avant toute vraie mise en prod.
-argocd_repo_url: https://github.com/Kubequest-Epitech/nex-application.git
-argocd_repo_username: vicous
-argocd_repo_password: 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

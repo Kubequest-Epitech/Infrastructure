@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nex-application
+  namespace: argocd
+spec:
+  project: default
+  source:
+    # Repo prive : credentials via le Secret kubequest-gitops-repo (role secrets).
+    # repoURL templatise pour rester identique a l'url du Secret (argocd_repo_url).
+    repoURL: "{{ argocd_repo_url }}"
+    targetRevision: main
+    path: helm
+    helm:
+      parameters:
+        # Le chart pointe le backend sur vicous/kubequest-back, inaccessible avec
+        # les creds camzerr. L'image backend est en realite chez camzerr.
+        # Le pull se fait via le SA default (imagePullSecret kubequest-dockerhub-backend).
+        - name: backend.image.repository
+          value: camzerr/kubequest-back
+  destination:
+    server: https://kubernetes.default.svc
+    # Namespace dedie : le ns 'default' est interdit par la policy Kyverno.
+    namespace: "{{ application_namespace }}"
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
