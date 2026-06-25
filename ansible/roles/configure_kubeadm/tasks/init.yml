@@ -26,6 +26,22 @@
     remote_src: true
     mode: "0600"
 
+- name: Reduire le delai d'eviction des pods (30s au lieu de 300s)
+  ansible.builtin.lineinfile:
+    path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    insertafter: "- kube-apiserver"
+    line: "    - --default-not-ready-toleration-seconds=30"
+    regexp: "--default-not-ready-toleration-seconds="
+  when: not configure_kubeadm_already_init.stat.exists
+
+- name: Reduire le delai d'eviction unreachable (30s au lieu de 300s)
+  ansible.builtin.lineinfile:
+    path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    insertafter: "--default-not-ready-toleration-seconds=30"
+    line: "    - --default-unreachable-toleration-seconds=30"
+    regexp: "--default-unreachable-toleration-seconds="
+  when: not configure_kubeadm_already_init.stat.exists
+
 - name: Installer le CNI Calico
   ansible.builtin.command:
     cmd: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.3/manifests/calico.yaml

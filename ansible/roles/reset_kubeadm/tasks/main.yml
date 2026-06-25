@@ -23,25 +23,16 @@
   failed_when: false
   when: inventory_hostname in groups['kube1']
 
-- name: Drainer le node avant suppression
-  ansible.builtin.command:
-    cmd: kubectl drain {{ hostvars[item]['ansible_hostname'] }} --ignore-daemonsets --delete-emptydir-data --force
-  loop: "{{ groups['kube_all'] | difference(groups['kube1']) }}"
-  loop_control:
-    label: "{{ item }}"
+- name: Supprimer les workers du cluster
+  ansible.builtin.shell:
+    cmd: |
+      NODES=$(kubectl get nodes \
+        --selector='!node-role.kubernetes.io/control-plane' \
+        -o jsonpath='{.items[*].metadata.name}' 2>/dev/null)
+      [ -n "$NODES" ] && echo "$NODES" | xargs kubectl delete node --force --grace-period=0 || true
+  when: inventory_hostname in groups['kube1']
   failed_when: false
   changed_when: true
-  when: inventory_hostname in groups['kube1']
-
-- name: Supprimer les nodes du cluster
-  ansible.builtin.command:
-    cmd: kubectl delete node {{ hostvars[item]['ansible_hostname'] }}
-  loop: "{{ groups['kube_all'] | difference(groups['kube1']) }}"
-  loop_control:
-    label: "{{ item }}"
-  failed_when: false
-  changed_when: true
-  when: inventory_hostname in groups['kube1']
 
 - name: Reset kubeadm sur les workers
   ansible.builtin.command:
