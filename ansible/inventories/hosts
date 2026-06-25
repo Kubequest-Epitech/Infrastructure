@@ -6,6 +6,6 @@ workers
 ec2-3-254-21-149.eu-west-1.compute.amazonaws.com
 
 [workers]
-ec2-34-244-161-205.eu-west-1.compute.amazonaws.com
-ec2-108-129-154-150.eu-west-1.compute.amazonaws.com
-ec2-3-253-37-45.eu-west-1.compute.amazonaws.com
+ec2-3-248-212-127.eu-west-1.compute.amazonaws.com
+ec2-3-250-164-110.eu-west-1.compute.amazonaws.com
+ec2-108-130-64-106.eu-west-1.compute.amazonaws.com

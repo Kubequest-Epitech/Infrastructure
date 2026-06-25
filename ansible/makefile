@@ -6,7 +6,7 @@ HOSTS=inventories/hosts
 PLAYBOOK=playbook.yml
 VENV=.venv
 
-.PHONY: help install run reset traefik argocd app kyverno namespaces secrets argocd-password kubeconfig tunnel dns
+.PHONY: help install run reset traefik argocd app kyverno namespaces secrets argocd-password kubeconfig tunnel dns encrypt decrypt
 
 install: ## Installer les dependances Ansible dans le venv
 	@if ! $(VENV)/bin/python3 --version >/dev/null 2>&1; then \
@@ -143,6 +143,14 @@ dns: ## Afficher la commande pour configurer le DNS local (/etc/hosts)
 	echo "  Linux   : sudo sed -i '/kubequest.local/d' /etc/hosts && echo \"$$IP argocd.kubequest.local\" | sudo tee -a /etc/hosts"; \
 	echo "  Windows : powershell -Command \"(Get-Content C:\Windows\System32\drivers\etc\hosts | Where-Object { \$$_ -notmatch 'kubequest.local' }) + '$$IP argocd.kubequest.local' | Set-Content C:\Windows\System32\drivers\etc\hosts\" (run as Admin)"; \
 	echo ""
+
+encrypt: install ## Chiffrer secrets/app-secrets.yml avec ansible-vault
+	@. $(VENV)/bin/activate && \
+	$(VENV)/bin/ansible-vault encrypt secrets/app-secrets.yml
+
+decrypt: install ## Dechiffrer secrets/app-secrets.yml en clair sur disque (ne pas committer)
+	@. $(VENV)/bin/activate && \
+	$(VENV)/bin/ansible-vault decrypt secrets/app-secrets.yml
 
 reset: install ## Supprimer le cluster Kubernetes (kubeadm reset)
 	@echo "Starting ssh-agent with venv..."

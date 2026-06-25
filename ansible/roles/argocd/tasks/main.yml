@@ -17,6 +17,21 @@
     dest: /tmp/argocd-values.yml
     mode: "0644"
 
+- name: Verifier si le secret argocd-redis existe
+  ansible.builtin.command:
+    cmd: kubectl get secret argocd-redis -n {{ argocd_namespace }}
+  register: redis_secret_check
+  failed_when: false
+  changed_when: false
+
+- name: Creer le secret argocd-redis
+  ansible.builtin.shell:
+    cmd: >
+      kubectl create secret generic argocd-redis
+      --from-literal=auth="$(openssl rand -base64 32)"
+      -n {{ argocd_namespace }}
+  when: redis_secret_check.rc != 0
+
 - name: Deploy ArgoCD via Helm
   ansible.builtin.command:
     cmd: >
@@ -35,6 +50,28 @@
       -n {{ argocd_namespace }}
       --timeout=180s
   changed_when: false
+
+- name: Creer le projet ArgoCD default
+  ansible.builtin.shell:
+    cmd: |
+      kubectl apply -f - <<'EOF'
+      apiVersion: argoproj.io/v1alpha1
+      kind: AppProject
+      metadata:
+        name: default
+        namespace: {{ argocd_namespace }}
+      spec:
+        sourceRepos:
+          - '*'
+        destinations:
+          - namespace: '*'
+            server: '*'
+        clusterResourceWhitelist:
+          - group: '*'
+            kind: '*'
+      EOF
+  register: argocd_project_apply
+  changed_when: "'created' in argocd_project_apply.stdout or 'configured' in argocd_project_apply.stdout"
 
 - name: Copy nex-application Application manifest to control plane
   ansible.builtin.template:
