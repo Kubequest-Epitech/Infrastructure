@@ -1,0 +1,39 @@
+---
+- name: Creer le namespace {{ postgres_namespace }}
+  ansible.builtin.command:
+    cmd: kubectl create namespace {{ postgres_namespace }}
+  register: postgres_ns_create
+  changed_when: "'created' in postgres_ns_create.stdout"
+  failed_when: postgres_ns_create.rc != 0 and 'already exists' not in postgres_ns_create.stderr
+
+- name: Creer le secret PostgreSQL
+  ansible.builtin.command:
+    cmd: >
+      kubectl create secret generic postgresql-secret
+      --namespace {{ postgres_namespace }}
+      --from-literal=password={{ postgres_password }}
+  register: postgres_secret_create
+  changed_when: "'created' in postgres_secret_create.stdout"
+  failed_when: postgres_secret_create.rc != 0 and 'already exists' not in postgres_secret_create.stderr
+  no_log: true
+
+- name: Copier le manifest PostgreSQL sur le control plane
+  ansible.builtin.copy:
+    src: postgres.yml
+    dest: /tmp/postgres.yml
+    mode: "0644"
+
+- name: Deployer PostgreSQL
+  ansible.builtin.command:
+    cmd: kubectl apply -f /tmp/postgres.yml
+  register: postgres_apply
+  changed_when: "'created' in postgres_apply.stdout or 'configured' in postgres_apply.stdout"
+
+- name: Attendre que PostgreSQL soit pret
+  ansible.builtin.command:
+    cmd: >
+      kubectl wait --for=condition=ready pod
+      -l app=postgresql
+      -n {{ postgres_namespace }}
+      --timeout=180s
+  changed_when: false

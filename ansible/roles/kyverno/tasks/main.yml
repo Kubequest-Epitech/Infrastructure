@@ -26,6 +26,7 @@
       --values /tmp/kyverno-values.yml
   register: kyverno_helm_install
   changed_when: "'STATUS: deployed' in kyverno_helm_install.stdout"
+  ignore_errors: true
 
 - name: Attendre que le webhook admission controller Kyverno soit pret
   ansible.builtin.command:

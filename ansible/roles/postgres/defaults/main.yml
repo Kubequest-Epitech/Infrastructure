@@ -1,0 +1,5 @@
+---
+postgres_namespace: application
+postgres_chart_version: "18.7.5"
+postgres_password: postgres
+postgres_db: postgres

@@ -28,6 +28,7 @@ spec:
                 - kube-public
                 - kube-node-lease
                 - kyverno
+                - local-path-storage
                 - argocd
                 - traefik
       validate:

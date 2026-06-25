@@ -57,6 +57,13 @@
   roles:
     - argocd
 
+- name: Deployer PostgreSQL sur le cluster
+  hosts: kube1
+  tags: postgres
+  become: true
+  roles:
+    - postgres
+
 - name: Supprimer le cluster Kubernetes
   hosts: kube_all
   tags:
