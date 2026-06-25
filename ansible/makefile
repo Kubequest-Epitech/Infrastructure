@@ -1,11 +1,12 @@
 # Makefile to run Ansible with vaulted SSH key and venv
 
 VAULT_KEY=secrets/id_rsa
-INVENTORY=inventories/hosts
+INVENTORY=inventories
+HOSTS=inventories/hosts
 PLAYBOOK=playbook.yml
 VENV=.venv
 
-.PHONY: help install run reset traefik argocd argocd-password kubeconfig tunnel dns postgres
+.PHONY: help install run reset traefik argocd app kyverno namespaces secrets argocd-password kubeconfig tunnel dns encrypt decrypt
 
 install: ## Installer les dependances Ansible dans le venv
 	@if ! $(VENV)/bin/python3 --version >/dev/null 2>&1; then \
@@ -27,7 +28,7 @@ run: install ## Launch the playbook
 		echo "Adding vaulted SSH key..."; \
 		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
 		echo "Running Ansible playbook..."; \
-		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK); \
+		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --ask-vault-pass; \
 	'
 
 traefik: install ## Deployer Traefik sur le cluster
@@ -52,6 +53,50 @@ argocd: install ## Deployer ArgoCD sur le control-plane
 		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags argocd; \
 	'
 
+app: install ## Redeployer l'app nex (re-apply Application ArgoCD + refresh)
+	@echo "Starting ssh-agent with venv..."
+	@bash -c '\
+		eval "$$(ssh-agent -s)"; \
+		. $(VENV)/bin/activate; \
+		echo "Adding vaulted SSH key..."; \
+		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
+		echo "Redeploying nex-application..."; \
+		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags app; \
+	'
+
+namespaces: install ## Creer les namespaces depuis inventories/all.yml
+	@echo "Starting ssh-agent with venv..."
+	@bash -c '\
+		eval "$$(ssh-agent -s)"; \
+		. $(VENV)/bin/activate; \
+		echo "Adding vaulted SSH key..."; \
+		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
+		echo "Creating namespaces..."; \
+		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags namespaces; \
+	'
+
+kyverno: install ## Deployer Kyverno et (re)appliquer les policies
+	@echo "Starting ssh-agent with venv..."
+	@bash -c '\
+		eval "$$(ssh-agent -s)"; \
+		. $(VENV)/bin/activate; \
+		echo "Adding vaulted SSH key..."; \
+		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
+		echo "Deploying Kyverno..."; \
+		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags kyverno; \
+	'
+
+secrets: install ## Creer les Secrets Kubernetes (donnees sensibles) sur le control-plane
+	@echo "Starting ssh-agent with venv..."
+	@bash -c '\
+		eval "$$(ssh-agent -s)"; \
+		. $(VENV)/bin/activate; \
+		echo "Adding vaulted SSH key..."; \
+		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
+		echo "Creating Kubernetes Secrets..."; \
+		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags secrets --ask-vault-pass; \
+	'
+
 kubeconfig: install ## Recuperer le kubeconfig du cluster dans ~/.kube/config-kubequest
 	@echo "Starting ssh-agent with venv..."
 	@bash -c '\
@@ -68,7 +113,7 @@ tunnel: install ## Ouvrir un tunnel SSH vers l'API server (port 6443) - laisser 
 		eval "$$(ssh-agent -s)" >/dev/null; \
 		. $(VENV)/bin/activate; \
 		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add - 2>/dev/null; \
-		KUBE1=$$(awk "/^\[kube1\]/{getline; print; exit}" $(INVENTORY)); \
+		KUBE1=$$(awk "/^\[kube1\]/{getline; print; exit}" $(HOSTS)); \
 		echo "Tunnel SSH actif vers $$KUBE1:6443 -> localhost:6443"; \
 		echo "Laisser ce terminal ouvert. Ctrl+C pour fermer."; \
 		ssh -N -L 6443:localhost:6443 ec2-user@$$KUBE1; \
@@ -86,7 +131,7 @@ argocd-password: install ## Recuperer le mot de passe admin ArgoCD
 	'
 
 dns: ## Afficher la commande pour configurer le DNS local (/etc/hosts)
-	@WORKER_IP=$$(awk '/^\[workers\]/{getline; print; exit}' $(INVENTORY)); \
+	@WORKER_IP=$$(awk '/^\[workers\]/{getline; print; exit}' $(HOSTS)); \
 	IP=$$(dig +short $$WORKER_IP 2>/dev/null || nslookup $$WORKER_IP 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | tail -1); \
 	echo ""; \
 	echo "Traefik tourne sur tous les workers (DaemonSet)."; \
@@ -109,6 +154,13 @@ postgres: install ## Deployer PostgreSQL sur le cluster (namespace application)
 		echo "Deploying PostgreSQL..."; \
 		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags postgres; \
 	'
+encrypt: install ## Chiffrer secrets/app-secrets.yml avec ansible-vault
+	@. $(VENV)/bin/activate && \
+	$(VENV)/bin/ansible-vault encrypt secrets/app-secrets.yml
+
+decrypt: install ## Dechiffrer secrets/app-secrets.yml en clair sur disque (ne pas committer)
+	@. $(VENV)/bin/activate && \
+	$(VENV)/bin/ansible-vault decrypt secrets/app-secrets.yml
 
 reset: install ## Supprimer le cluster Kubernetes (kubeadm reset)
 	@echo "Starting ssh-agent with venv..."

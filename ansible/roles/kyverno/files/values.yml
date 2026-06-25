@@ -1,3 +1,4 @@
+# Pinning control-plane (choix assume). /!\ Charge etcd sur un petit CP.
 admissionController:
   replicas: 1
   tolerations:
@@ -30,3 +31,29 @@ reportsController:
       effect: "NoSchedule"
   nodeSelector:
     node-role.kubernetes.io/control-plane: ""
+
+# Hook post-upgrade de migration CRD desactive : il fait des appels API
+# in-cluster et echoue quand l'API est instable. Inutile ici (meme version
+# 3.3.4, rien a migrer).
+crds:
+  migration:
+    enabled: false
+
+# Les hooks de cleanup utilisent bitnami/kubectl:1.30.2, retiree de Docker Hub
+# (ImagePullBackOff => le hook ne finit jamais => upgrade Helm en timeout).
+# On pointe sur l'image identique deplacee dans le namespace 'bitnamilegacy'.
+# policyReportsCleanup : hook post-upgrade (job kyverno-clean-reports).
+# webhooksCleanup      : hook pre-delete (declenche au reset/uninstall).
+policyReportsCleanup:
+  # Hook post-upgrade desactive : le job clean-reports fait des appels API
+  # in-cluster (10.96.0.1) et hang quand l'API est instable -> timeout helm.
+  # Nettoyage de vieux reports = cosmetique, le reports-controller s'en charge.
+  enabled: false
+  image:
+    repository: bitnamilegacy/kubectl
+    tag: "1.30.2"
+
+webhooksCleanup:
+  image:
+    repository: bitnamilegacy/kubectl
+    tag: "1.30.2"

@@ -1,38 +1,16 @@
 ---
-- name: Ouvrir les ports master - API server (6443)
+- name: Ouvrir les ports du control plane
   become: true
   ansible.builtin.iptables:
     chain: INPUT
     protocol: tcp
-    destination_port: "6443"
+    destination_port: "{{ item }}"
     jump: ACCEPT
-  when: inventory_hostname in groups['kube1']
-
-- name: Ouvrir les ports master - etcd (2379-2380)
-  become: true
-  ansible.builtin.iptables:
-    chain: INPUT
-    protocol: tcp
-    destination_port: "2379:2380"
-    jump: ACCEPT
-  when: inventory_hostname in groups['kube1']
-
-- name: Ouvrir les ports master - kube-scheduler (10251)
-  become: true
-  ansible.builtin.iptables:
-    chain: INPUT
-    protocol: tcp
-    destination_port: "10251"
-    jump: ACCEPT
-  when: inventory_hostname in groups['kube1']
-
-- name: Ouvrir les ports master - kube-controller-manager (10252)
-  become: true
-  ansible.builtin.iptables:
-    chain: INPUT
-    protocol: tcp
-    destination_port: "10252"
-    jump: ACCEPT
+  loop:
+    - "6443"
+    - "2379:2380"
+    - "10251"
+    - "10252"
   when: inventory_hostname in groups['kube1']
 
 - name: Ouvrir le port Kubelet API (10250) sur tous les noeuds

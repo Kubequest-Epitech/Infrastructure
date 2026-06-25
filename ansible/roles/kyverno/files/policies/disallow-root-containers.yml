@@ -29,6 +29,8 @@ spec:
                 - kube-node-lease
                 - kyverno
                 - local-path-storage
+                - argocd
+                - traefik
       validate:
         message: >-
           Les containers ne doivent pas tourner en root. Definissez

@@ -1,0 +1,17 @@
+---
+# Variables du groupe 'all' (format inventaire YAML).
+# IMPORTANT : ce fichier est charge comme SOURCE D'INVENTAIRE, donc les cles
+# de premier niveau doivent etre des GROUPES. Les variables vont OBLIGATOIREMENT
+# sous 'all:' -> 'vars:'. Si on les met a la racine, Ansible affiche
+# "not a valid group definition" et ne les charge pas.
+all:
+  vars:
+    argocd_namespace: "argocd"
+    application_namespace: "application"
+    traefik_namespace: "traefik"
+    kyverno_namespace: "kyverno"
+    # Repo GitOps prive (non-secrets). Le token, lui, est dans le vault
+    # (vault_argocd_repo_password). L'url DOIT matcher exactement le repoURL
+    # de l'Application ArgoCD, sinon les credentials ne sont pas associes.
+    argocd_repo_url: "https://github.com/Kubequest-Epitech/nex-application.git"
+    argocd_repo_username: "kubequest"

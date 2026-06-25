@@ -1,5 +1,4 @@
 ---
-
 - name: Preparation de tous les noeuds
   hosts: kube_all
   tags: preparation
@@ -15,12 +14,40 @@
   roles:
     - configure_kubeadm
 
-- name: Installer Helm et deployer Traefik
+- name: Creer les namespaces applicatifs
+  hosts: kube1
+  tags: namespaces
+  become: true
+  roles:
+    - namespaces
+
+- name: Creer les Secrets Kubernetes (donnees sensibles)
+  hosts: kube1
+  tags:
+    - secrets
+  become: true
+  roles:
+    - secrets
+
+# Helm est requis par kyverno, traefik et argocd : installe une seule fois,
+# avant tout le reste. Tag multiple pour que make kyverno/traefik/argocd
+# tirent l'installation de Helm au besoin.
+- name: Installer Helm
+  hosts: kube1
+  tags:
+    - helm
+    - traefik
+    - argocd
+  become: true
+  roles:
+    - install_helm
+
+
+- name: Deployer Traefik
   hosts: kube1
   tags: traefik
   become: true
   roles:
-    - install_helm
     - traefik
 
 - name: Installer ArgoCD sur le control-plane
@@ -29,13 +56,6 @@
   become: true
   roles:
     - argocd
-
-- name: Installer Kyverno et ses policies de securite
-  hosts: kube1
-  tags: kyverno
-  become: true
-  roles:
-    - kyverno
 
 - name: Deployer PostgreSQL sur le cluster
   hosts: kube1

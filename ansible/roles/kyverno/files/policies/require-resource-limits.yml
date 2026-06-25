@@ -29,6 +29,8 @@ spec:
                 - kube-node-lease
                 - kyverno
                 - local-path-storage
+                - argocd
+                - traefik
       validate:
         message: >-
           Chaque container doit definir resources.requests (cpu, memory)
