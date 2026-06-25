@@ -28,6 +28,8 @@ spec:
                 - kube-public
                 - kube-node-lease
                 - kyverno
+                - argocd
+                - traefik
       validate:
         message: >-
           Chaque container doit definir resources.requests (cpu, memory)

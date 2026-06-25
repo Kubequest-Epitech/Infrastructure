@@ -27,6 +27,11 @@ spec:
         deny:
           conditions:
             any:
-              - key: "{{ request.object.metadata.namespace }}"
+              # IMPORTANT: utiliser 'request.namespace' et NON
+              # 'request.object.metadata.namespace'. L'autogen Kyverno reecrit
+              # ce dernier en 'spec.template.metadata.namespace' (inexistant sur
+              # un pod-template) => JMESPath plante et TOUT pod-controller
+              # (Deployment/DaemonSet/Job) est refuse, quel que soit son namespace.
+              - key: "{{ request.namespace }}"
                 operator: Equals
                 value: default
