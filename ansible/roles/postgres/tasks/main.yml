@@ -1,4 +1,23 @@
 ---
+- name: Charger les secrets du vault
+  ansible.builtin.include_vars:
+    file: "{{ playbook_dir }}/secrets/app-secrets.yml"
+  no_log: true
+
+- name: Installer local-path-provisioner (StorageClass pour les PVC)
+  ansible.builtin.command:
+    cmd: kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.31/deploy/local-path-storage.yaml
+  register: lpp_apply
+  changed_when: "'created' in lpp_apply.stdout or 'configured' in lpp_apply.stdout"
+
+- name: Attendre que local-path-provisioner soit pret
+  ansible.builtin.command:
+    cmd: >
+      kubectl wait --for=condition=available deployment/local-path-provisioner
+      -n local-path-storage
+      --timeout=60s
+  changed_when: false
+
 - name: Creer le namespace {{ postgres_namespace }}
   ansible.builtin.command:
     cmd: kubectl create namespace {{ postgres_namespace }}
@@ -6,12 +25,31 @@
   changed_when: "'created' in postgres_ns_create.stdout"
   failed_when: postgres_ns_create.rc != 0 and 'already exists' not in postgres_ns_create.stderr
 
+- name: Verifier si le PVC postgresql est en Pending
+  ansible.builtin.command:
+    cmd: kubectl get pvc data-postgresql-0 -n {{ postgres_namespace }} -o jsonpath='{.status.phase}'
+  register: pvc_status
+  failed_when: false
+  changed_when: false
+
+- name: Supprimer le StatefulSet postgresql si PVC bloque
+  ansible.builtin.command:
+    cmd: kubectl delete statefulset postgresql -n {{ postgres_namespace }} --ignore-not-found
+  when: pvc_status.stdout == 'Pending'
+  changed_when: true
+
+- name: Supprimer les PVC bloques
+  ansible.builtin.command:
+    cmd: kubectl delete pvc data-postgresql-0 -n {{ postgres_namespace }} --ignore-not-found
+  when: pvc_status.stdout == 'Pending'
+  changed_when: true
+
 - name: Creer le secret PostgreSQL
   ansible.builtin.command:
     cmd: >
       kubectl create secret generic postgresql-secret
       --namespace {{ postgres_namespace }}
-      --from-literal=password={{ postgres_password }}
+      --from-literal=password={{ vault_db_root_password }}
   register: postgres_secret_create
   changed_when: "'created' in postgres_secret_create.stdout"
   failed_when: postgres_secret_create.rc != 0 and 'already exists' not in postgres_secret_create.stderr
