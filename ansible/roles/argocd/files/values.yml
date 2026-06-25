@@ -19,13 +19,12 @@ redisSecretInit:
 configs:
   params:
     server.insecure: true
-  resourceCustomizations: |
-    networking.k8s.io/Ingress:
-      health.lua: |
-        hs = {}
-        hs.status = "Healthy"
-        hs.message = ""
-        return hs
+  cm:
+    resource.customizations.health.networking.k8s.io_Ingress: |
+      hs = {}
+      hs.status = "Healthy"
+      hs.message = ""
+      return hs
 
 server:
   ingress:
