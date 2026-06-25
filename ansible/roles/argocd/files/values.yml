@@ -30,7 +30,6 @@ server:
   ingress:
     enabled: true
     ingressClassName: traefik
-    hostname: argocd.kubequest.local
+    hostname: argocd.visiobook.cloud
     annotations:
-      traefik.ingress.kubernetes.io/router.entrypoints: websecure
-      traefik.ingress.kubernetes.io/router.tls: "true"
+      traefik.ingress.kubernetes.io/router.entrypoints: web
