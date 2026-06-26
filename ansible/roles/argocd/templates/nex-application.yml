@@ -20,7 +20,8 @@ spec:
           value: camzerr/kubequest-back
   destination:
     server: https://kubernetes.default.svc
-    # Namespace dedie : le ns 'default' est interdit par la policy Kyverno.
+    # Namespace dedie (bonne pratique isolation/RBAC/observabilite). NB: Kyverno
+    # n'est plus deploye (role laisse en l'etat, retire du playbook).
     namespace: "{{ application_namespace }}"
   syncPolicy:
     automated:
@@ -28,3 +29,12 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+  # HPA + selfHeal : sans ceci, ArgoCD remettrait en boucle le nombre de
+  # replicas defini dans Git et se battrait avec l'HorizontalPodAutoscaler.
+  # On ignore donc /spec/replicas des Deployments : c'est l'HPA qui pilote.
+  # (Pre-requis cote app : retirer le champ `replicas:` du Deployment Helm.)
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas

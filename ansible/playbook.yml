@@ -29,9 +29,10 @@
   roles:
     - secrets
 
-# Helm est requis par traefik, cert-manager, argocd et monitoring : installe une
-# seule fois, avant tout le reste. Tag multiple pour que make
-# traefik/argocd/cert-manager/monitoring tirent l'installation de Helm au besoin.
+# Helm est requis par traefik, cert-manager, argocd, monitoring et
+# metrics-server : installe une seule fois, avant tout le reste. Tag multiple
+# pour que make traefik/argocd/cert-manager/monitoring/metrics-server tirent
+# l'installation de Helm au besoin.
 - name: Installer Helm
   hosts: kube1
   tags:
@@ -40,6 +41,7 @@
     - argocd
     - monitoring
     - cert-manager
+    - metrics-server
   become: true
   roles:
     - install_helm
@@ -79,6 +81,15 @@
   become: true
   roles:
     - monitoring
+
+# metrics-server : API metrics.k8s.io requise par l'HPA (autoscaling sur CPU)
+# et par `kubectl top`. Non fourni par kube-prometheus-stack.
+- name: Deployer metrics-server (autoscaling HPA)
+  hosts: kube1
+  tags: metrics-server
+  become: true
+  roles:
+    - metrics-server
 
 - name: Supprimer le cluster Kubernetes
   hosts: kube_all

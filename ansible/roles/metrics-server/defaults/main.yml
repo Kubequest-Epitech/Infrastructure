@@ -1,0 +1,10 @@
+---
+# metrics-server expose l'API metrics.k8s.io (CPU/RAM des pods) consommee par
+# l'HPA et par `kubectl top`. kube-prometheus-stack ne l'installe PAS : c'est un
+# composant a part, indispensable pour que l'autoscaling sur CPU fonctionne.
+# Deploye dans kube-system (namespace systeme, toujours present).
+metrics_server_namespace: kube-system
+
+# Version du chart Helm metrics-server. Pour bumper :
+#   helm search repo metrics-server/metrics-server --versions
+metrics_server_chart_version: "3.12.2"

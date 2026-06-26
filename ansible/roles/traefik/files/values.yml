@@ -14,6 +14,24 @@ ingressRoute:
   dashboard:
     enabled: true
 
+# Metriques Prometheus de Traefik : c'est LA source du "nombre de requetes sur
+# l'ingress" (traefik_entrypoint_requests_total, traefik_service_requests_total,
+# traefik_router_requests_total). Le chart cree un entrypoint "metrics" (port
+# 9100) + un Service dedie "traefik-metrics" qui expose /metrics.
+# Le scraping est fait par un ServiceMonitor cree cote role monitoring (les CRDs
+# Prometheus-Operator n'existent pas encore au moment ou Traefik est deploye).
+metrics:
+  prometheus:
+    addEntryPointsLabels: true
+    addRoutersLabels: true
+    addServicesLabels: true
+    service:
+      enabled: true
+    # ServiceMonitor gere par le role monitoring (ordre de deploiement : Traefik
+    # est installe AVANT kube-prometheus-stack qui fournit la CRD ServiceMonitor).
+    serviceMonitor:
+      enabled: false
+
 additionalArguments:
   - "--api.insecure=true"
   - "--api.dashboard=true"

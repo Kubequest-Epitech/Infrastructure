@@ -6,7 +6,7 @@ HOSTS=inventories/hosts
 PLAYBOOK=playbook.yml
 VENV=.venv
 
-.PHONY: help install run reset traefik argocd cert-manager app kyverno namespaces secrets argocd-password grafana-password monitoring kubeconfig tunnel dns encrypt decrypt
+.PHONY: help install run reset traefik argocd cert-manager app kyverno namespaces secrets argocd-password grafana-password monitoring metrics-server kubeconfig tunnel dns encrypt decrypt
 
 install: ## Installer les dependances Ansible dans le venv
 	@if ! $(VENV)/bin/python3 --version >/dev/null 2>&1; then \
@@ -73,6 +73,17 @@ monitoring: install ## Deployer la stack monitoring (Prometheus + Grafana + node
 		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
 		echo "Deploying monitoring stack..."; \
 		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags monitoring; \
+	'
+
+metrics-server: install ## Deployer metrics-server (API metrics.k8s.io pour HPA + kubectl top)
+	@echo "Starting ssh-agent with venv..."
+	@bash -c '\
+		eval "$$(ssh-agent -s)"; \
+		. $(VENV)/bin/activate; \
+		echo "Adding vaulted SSH key..."; \
+		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
+		echo "Deploying metrics-server..."; \
+		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags metrics-server; \
 	'
 
 app: install ## Redeployer l'app nex (re-apply Application ArgoCD + refresh)

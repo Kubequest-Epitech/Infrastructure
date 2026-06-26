@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubequest-hpa-demo-dashboard
+  namespace: {{ monitoring_namespace }}
+  labels:
+    # Label scrute par le sidecar dashboards de Grafana (kube-prometheus-stack) :
+    # tout ConfigMap portant ce label est auto-importe comme dashboard, sans
+    # redeploiement de Grafana. Le JSON est insere tel quel par lookup('file')
+    # (pas de re-templating Jinja -> les {{ "{{" }}pod{{ "}}" }} de legende sont preserves).
+    grafana_dashboard: "1"
+data:
+  kubequest-hpa-demo.json: |
+{{ lookup('file', role_path ~ '/files/dashboard-hpa-demo.json') | indent(4, true) }}

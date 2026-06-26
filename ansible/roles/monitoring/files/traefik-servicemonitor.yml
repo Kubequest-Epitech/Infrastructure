@@ -1,0 +1,24 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: traefik
+  namespace: monitoring
+  labels:
+    # Prometheus de ce chart decouvre tous les ServiceMonitor (le role monitoring
+    # met serviceMonitorSelectorNilUsesHelmValues=false) ; ce label est cosmetique.
+    release: kube-prometheus-stack
+spec:
+  # Le Service "traefik-metrics" vit dans le namespace traefik, ce ServiceMonitor
+  # dans monitoring -> selection cross-namespace explicite.
+  namespaceSelector:
+    matchNames:
+      - traefik
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+  endpoints:
+    # Port nomme "metrics" expose par le Service traefik-metrics (chart Traefik
+    # avec metrics.prometheus.service.enabled=true).
+    - port: metrics
+      path: /metrics
+      interval: 15s

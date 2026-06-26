@@ -1,0 +1,19 @@
+# Values metrics-server — KubeQuest
+# Objectif : fournir l'API metrics.k8s.io (kubectl top + source CPU de l'HPA).
+args:
+  # Cluster kubeadm : les kubelets exposent un certificat auto-signe. Sans ce
+  # flag, metrics-server refuse la connexion TLS au kubelet et reste "unavailable"
+  # -> aucune metrique -> l'HPA ne peut pas decider. Acceptable ici (trafic
+  # interne au cluster), c'est la config standard pour kubeadm.
+  - --kubelet-insecure-tls
+  # Sur EC2 le Hostname du noeud n'est pas toujours resolvable depuis le pod
+  # metrics-server : on privilegie l'InternalIP pour joindre les kubelets.
+  - --kubelet-preferred-address-types=InternalIP,Hostname,ExternalIP
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi

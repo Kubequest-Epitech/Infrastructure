@@ -63,5 +63,41 @@
       --timeout=300s
   changed_when: false
 
+# Scraping de Traefik : la CRD ServiceMonitor est fournie par kube-prometheus-stack
+# (installe juste au-dessus), donc on applique le ServiceMonitor APRES. C'est ce
+# qui fait remonter traefik_*_requests_total dans Prometheus -> panneau "requetes
+# sur l'ingress" du dashboard. (Pre-requis : metrics Prometheus activees cote role
+# traefik.) Tag dediee pour pouvoir le (re)pousser seul.
+- name: Copier le ServiceMonitor Traefik sur le control plane
+  ansible.builtin.copy:
+    src: traefik-servicemonitor.yml
+    dest: /tmp/traefik-servicemonitor.yml
+    mode: "0644"
+  tags: [traefik-metrics]
+
+- name: Appliquer le ServiceMonitor Traefik (scrape /metrics)
+  ansible.builtin.command:
+    cmd: kubectl apply -f /tmp/traefik-servicemonitor.yml
+  register: traefik_sm_apply
+  changed_when: "'created' in traefik_sm_apply.stdout or 'configured' in traefik_sm_apply.stdout"
+  tags: [traefik-metrics]
+
+# Dashboard de demo HPA/autoscaling : provisionne via un ConfigMap labelise
+# `grafana_dashboard=1`, auto-importe par le sidecar Grafana (pas besoin de
+# redeployer le chart). Tag dediee pour pouvoir le (re)pousser seul.
+- name: Copier le manifeste ConfigMap du dashboard HPA demo
+  ansible.builtin.template:
+    src: grafana-dashboard-hpa.yml.j2
+    dest: /tmp/grafana-dashboard-hpa.yml
+    mode: "0644"
+  tags: [hpa-dashboard]
+
+- name: Appliquer le dashboard HPA demo (auto-importe par le sidecar Grafana)
+  ansible.builtin.command:
+    cmd: kubectl apply -f /tmp/grafana-dashboard-hpa.yml
+  register: hpa_dashboard_apply
+  changed_when: "'created' in hpa_dashboard_apply.stdout or 'configured' in hpa_dashboard_apply.stdout"
+  tags: [hpa-dashboard]
+
 - name: Afficher les informations monitoring
   ansible.builtin.include_tasks: info.yml
