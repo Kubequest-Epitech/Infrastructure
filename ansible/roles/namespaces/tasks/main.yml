@@ -20,9 +20,9 @@
   changed_when: "'created' in ns_traefik.stdout"
   failed_when: ns_traefik.rc != 0 and 'already exists' not in ns_traefik.stderr
 
-- name: Créer le namespace Kyverno
+- name: Créer le namespace cert-manager
   ansible.builtin.command:
-    cmd: kubectl create namespace {{ kyverno_namespace }}
-  register: ns_kyverno
-  changed_when: "'created' in ns_kyverno.stdout"
-  failed_when: ns_kyverno.rc != 0 and 'already exists' not in ns_kyverno.stderr
+    cmd: kubectl create namespace {{ cert_manager_namespace }}
+  register: ns_cert_manager
+  changed_when: "'created' in ns_cert_manager.stdout"
+  failed_when: ns_cert_manager.rc != 0 and 'already exists' not in ns_cert_manager.stderr

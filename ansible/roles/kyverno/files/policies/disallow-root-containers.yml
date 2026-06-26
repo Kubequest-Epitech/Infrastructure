@@ -31,6 +31,7 @@ spec:
                 - local-path-storage
                 - argocd
                 - traefik
+                - cert-manager
       validate:
         message: >-
           Les containers ne doivent pas tourner en root. Definissez
