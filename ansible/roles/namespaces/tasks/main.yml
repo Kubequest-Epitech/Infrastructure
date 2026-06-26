@@ -26,3 +26,10 @@
   register: ns_cert_manager
   changed_when: "'created' in ns_cert_manager.stdout"
   failed_when: ns_cert_manager.rc != 0 and 'already exists' not in ns_cert_manager.stderr
+
+- name: Créer le namespace monitoring
+  ansible.builtin.command:
+    cmd: kubectl create namespace {{ monitoring_namespace }}
+  register: ns_monitoring
+  changed_when: "'created' in ns_monitoring.stdout"
+  failed_when: ns_monitoring.rc != 0 and 'already exists' not in ns_monitoring.stderr

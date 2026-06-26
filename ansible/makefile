@@ -6,7 +6,7 @@ HOSTS=inventories/hosts
 PLAYBOOK=playbook.yml
 VENV=.venv
 
-.PHONY: help install run reset traefik argocd app kyverno namespaces secrets argocd-password kubeconfig tunnel dns encrypt decrypt
+.PHONY: help install run reset traefik argocd cert-manager app kyverno namespaces secrets argocd-password grafana-password monitoring kubeconfig tunnel dns encrypt decrypt
 
 install: ## Installer les dependances Ansible dans le venv
 	@if ! $(VENV)/bin/python3 --version >/dev/null 2>&1; then \
@@ -51,6 +51,28 @@ argocd: install ## Deployer ArgoCD sur le control-plane
 		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
 		echo "Deploying ArgoCD..."; \
 		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags argocd; \
+	'
+
+cert-manager: install ## Deployer cert-manager + ClusterIssuer Let's Encrypt
+	@echo "Starting ssh-agent with venv..."
+	@bash -c '\
+		eval "$$(ssh-agent -s)"; \
+		. $(VENV)/bin/activate; \
+		echo "Adding vaulted SSH key..."; \
+		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
+		echo "Deploying cert-manager..."; \
+		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags cert-manager; \
+	'
+
+monitoring: install ## Deployer la stack monitoring (Prometheus + Grafana + node-exporter)
+	@echo "Starting ssh-agent with venv..."
+	@bash -c '\
+		eval "$$(ssh-agent -s)"; \
+		. $(VENV)/bin/activate; \
+		echo "Adding vaulted SSH key..."; \
+		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
+		echo "Deploying monitoring stack..."; \
+		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags monitoring; \
 	'
 
 app: install ## Redeployer l'app nex (re-apply Application ArgoCD + refresh)
@@ -126,6 +148,17 @@ argocd-password: install ## Recuperer le mot de passe admin ArgoCD
 		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
 		$(VENV)/bin/ansible -i $(INVENTORY) kube1 -b -a \
 			"kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath={.data.password}" \
+			2>/dev/null | tail -1 | base64 -d; \
+		echo; \
+	'
+
+grafana-password: install ## Recuperer le mot de passe admin Grafana
+	@bash -c '\
+		eval "$$(ssh-agent -s)"; \
+		. $(VENV)/bin/activate; \
+		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
+		$(VENV)/bin/ansible -i $(INVENTORY) kube1 -b -a \
+			"kubectl -n monitoring get secret grafana-admin -o jsonpath={.data.admin-password}" \
 			2>/dev/null | tail -1 | base64 -d; \
 		echo; \
 	'
