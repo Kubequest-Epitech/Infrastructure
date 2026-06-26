@@ -1,0 +1,34 @@
+---
+- name: Recuperer le mot de passe admin Grafana
+  ansible.builtin.command:
+    cmd: >
+      kubectl -n {{ monitoring_namespace }} get secret {{ grafana_admin_secret }}
+      -o jsonpath="{.data.admin-password}"
+  register: grafana_secret
+  changed_when: false
+
+- name: Decoder le mot de passe Grafana
+  ansible.builtin.set_fact:
+    grafana_password: "{{ grafana_secret.stdout | b64decode }}"
+
+- name: Afficher les informations monitoring
+  ansible.builtin.pause:
+    seconds: 1
+    prompt: |
+
+      ======================================================
+                    KUBEQUEST - MONITORING
+      ======================================================
+
+      GRAFANA:
+        URL      : https://{{ grafana_ingress_host }}
+        User     : admin
+        Password : {{ grafana_password }}
+        (aussi recuperable via : make grafana-password)
+        Dashboard a ouvrir : "Node Exporter / Nodes" (metriques VM)
+
+      PROMETHEUS (interne, via port-forward) :
+        kubectl -n {{ monitoring_namespace }} port-forward svc/kube-prometheus-stack-prometheus 9090
+        -> http://localhost:9090/targets  (verifier que les node-exporter sont UP)
+
+      ======================================================

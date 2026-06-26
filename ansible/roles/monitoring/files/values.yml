@@ -1,0 +1,151 @@
+# Values kube-prometheus-stack — KubeQuest
+# Objectif : metriques VM (node-exporter) -> Prometheus -> Grafana.
+
+# --- Grafana ---
+grafana:
+  # Identifiants admin : Secret genere dans le cluster (cf. role monitoring),
+  # jamais en clair dans git ni dans le vault. `make grafana-password` le lit.
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+  # Expose en HTTPS via Traefik + cert-manager (meme pattern que argocd.visiobook.cloud).
+  # - entrypoints web,websecure : ecoute en HTTP (80) ET HTTPS (443).
+  # - cert-manager.io/cluster-issuer : Let's Encrypt emet le cert automatiquement
+  #   (challenge HTTP-01 sur le port 80) et le stocke dans le Secret grafana-tls.
+  # -> https://grafana.visiobook.cloud/
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - grafana.visiobook.cloud
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - grafana.visiobook.cloud
+  # Persistance des dashboards/prefs custom sur la StorageClass du cluster.
+  persistence:
+    enabled: true
+    storageClassName: local-path
+    size: 5Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+
+  # Dashboards node-exporter livres avec le chart (offline, via ConfigMaps) :
+  # "Node Exporter / Nodes", "USE Method"... -> deja de quoi voir les 4 VM
+  # (selecteur de noeud). On garde ces dashboards par defaut.
+  defaultDashboardsEnabled: true
+
+  # Pre-provisionne "Node Exporter Full" (grafana.com ID 1860) : LE dashboard de
+  # reference pour les VM (CPU/RAM/disque/reseau par machine, dropdown instance).
+  # /!\ Telecharge depuis grafana.com au 1er demarrage du pod -> requiert l'acces
+  # internet sortant du cluster (deja le cas, sinon les images ne seraient pas pull).
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: vm-dashboards
+          orgId: 1
+          folder: "VM"
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/vm-dashboards
+  dashboards:
+    vm-dashboards:
+      node-exporter-full:
+        gnetId: 1860
+        revision: 37
+        datasource: Prometheus
+
+  # Dashboard d'accueil par defaut = Node Exporter Full : a la connexion, on
+  # atterrit directement sur les metriques VM. Le chemin suit la convention du
+  # chart : /var/lib/grafana/dashboards/<provider>/<dashboard-key>.json
+  grafana.ini:
+    dashboards:
+      default_home_dashboard_path: /var/lib/grafana/dashboards/vm-dashboards/node-exporter-full.json
+
+# --- Prometheus ---
+prometheus:
+  prometheusSpec:
+    retention: 7d
+    # Decouvre TOUS les ServiceMonitor/PodMonitor du cluster (pas seulement
+    # ceux portant le label release de ce chart).
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    # PVC pour la TSDB (meme StorageClass que PostgreSQL : local-path).
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: local-path
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+
+# --- node-exporter : LA source des metriques VM (1 pod par noeud) ---
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+  # Tolere tous les taints pour tourner AUSSI sur le control-plane (kube1)
+  # et remonter ses metriques VM.
+  tolerations:
+    - operator: Exists
+
+# --- kube-state-metrics : metriques des objets Kubernetes ---
+kube-state-metrics:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+# --- Prometheus Operator ---
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# --- Alertmanager : desactive (pas d'alerting pour l'instant) ---
+alertmanager:
+  enabled: false
+
+# --- Composants control-plane non scrappables tels quels sur kubeadm ---
+# Ils bindent sur 127.0.0.1 / exposent des certs non accessibles -> leurs
+# ServiceMonitor apparaitraient "down". Desactives pour garder des targets
+# propres. Reactivables en ajustant les --bind-address des manifests statiques.
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeProxy:
+  enabled: false

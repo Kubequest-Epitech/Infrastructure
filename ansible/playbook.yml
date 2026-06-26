@@ -29,15 +29,16 @@
   roles:
     - secrets
 
-# Helm est requis par traefik, cert-manager et argocd : installe une seule fois,
-# avant tout le reste. Tag multiple pour que make traefik/argocd/cert-manager
-# tirent l'installation de Helm au besoin.
+# Helm est requis par traefik, cert-manager, argocd et monitoring : installe une
+# seule fois, avant tout le reste. Tag multiple pour que make
+# traefik/argocd/cert-manager/monitoring tirent l'installation de Helm au besoin.
 - name: Installer Helm
   hosts: kube1
   tags:
     - helm
     - traefik
     - argocd
+    - monitoring
     - cert-manager
   become: true
   roles:
@@ -71,6 +72,13 @@
   become: true
   roles:
     - postgres
+
+- name: Deployer la stack monitoring (kube-prometheus-stack)
+  hosts: kube1
+  tags: monitoring
+  become: true
+  roles:
+    - monitoring
 
 - name: Deployer Loki sur le cluster
   hosts: kube1
