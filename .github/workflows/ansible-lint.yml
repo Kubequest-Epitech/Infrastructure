@@ -27,4 +27,7 @@ jobs:
 
       - name: Run Ansible Lint
         run: |
-          ansible-lint ./ansible
+          # -c : la config vit dans ansible/.ansible-lint (skip_list, exclude_paths).
+          # Sans ce flag, ansible-lint lance depuis la racine du repo ne la trouve
+          # pas (decouverte basee sur le cwd) et la config n'est jamais appliquee.
+          ansible-lint -c ansible/.ansible-lint ./ansible
