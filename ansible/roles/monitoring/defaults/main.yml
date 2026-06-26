@@ -1,0 +1,15 @@
+---
+# Namespace dedie a la stack d'observabilite.
+monitoring_namespace: monitoring
+
+# Chart all-in-one : Prometheus Operator + Prometheus + node-exporter
+# + kube-state-metrics + Grafana (datasource + dashboards node deja cables).
+# Derniere version du depot public (juin 2026). Pour bumper :
+#   helm search repo prometheus-community/kube-prometheus-stack --versions
+monitoring_chart_version: "87.2.1"
+
+# Hostname public Grafana (meme convention que argocd.visiobook.cloud).
+grafana_ingress_host: grafana.visiobook.cloud
+
+# Secret (genere dans le cluster) qui porte les identifiants admin Grafana.
+grafana_admin_secret: grafana-admin

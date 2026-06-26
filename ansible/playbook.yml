@@ -38,6 +38,7 @@
     - helm
     - traefik
     - argocd
+    - monitoring
   become: true
   roles:
     - install_helm
@@ -63,6 +64,13 @@
   become: true
   roles:
     - postgres
+
+- name: Deployer la stack monitoring (kube-prometheus-stack)
+  hosts: kube1
+  tags: monitoring
+  become: true
+  roles:
+    - monitoring
 
 - name: Supprimer le cluster Kubernetes
   hosts: kube_all

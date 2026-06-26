@@ -10,6 +10,7 @@ all:
     application_namespace: "application"
     traefik_namespace: "traefik"
     kyverno_namespace: "kyverno"
+    monitoring_namespace: "monitoring"
     # Repo GitOps prive (non-secrets). Le token, lui, est dans le vault
     # (vault_argocd_repo_password). L'url DOIT matcher exactement le repoURL
     # de l'Application ArgoCD, sinon les credentials ne sont pas associes.
