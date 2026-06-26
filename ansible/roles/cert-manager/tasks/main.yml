@@ -1,0 +1,52 @@
+---
+- name: Ajouter le repo Helm jetstack
+  ansible.builtin.command:
+    cmd: helm repo add jetstack https://charts.jetstack.io
+  register: certmanager_repo_add
+  changed_when: "'has been added' in certmanager_repo_add.stdout"
+  failed_when: certmanager_repo_add.rc != 0 and 'already exists' not in certmanager_repo_add.stderr
+
+- name: Mettre a jour les repos Helm
+  ansible.builtin.command:
+    cmd: helm repo update
+  changed_when: false
+
+- name: Deployer cert-manager via Helm
+  ansible.builtin.command:
+    cmd: >
+      helm upgrade --install cert-manager jetstack/cert-manager
+      --namespace {{ cert_manager_namespace }}
+      --version v1.17.2
+      --set installCRDs=true
+  register: certmanager_helm_install
+  changed_when: "'STATUS: deployed' in certmanager_helm_install.stdout"
+
+- name: Attendre que cert-manager soit pret
+  ansible.builtin.command:
+    cmd: >
+      kubectl wait --for=condition=available
+      deployment/cert-manager
+      -n {{ cert_manager_namespace }}
+      --timeout=120s
+  changed_when: false
+
+- name: Attendre que le webhook cert-manager soit pret
+  ansible.builtin.command:
+    cmd: >
+      kubectl wait --for=condition=available
+      deployment/cert-manager-webhook
+      -n {{ cert_manager_namespace }}
+      --timeout=120s
+  changed_when: false
+
+- name: Copier le ClusterIssuer sur le control plane
+  ansible.builtin.copy:
+    src: clusterissuer.yml
+    dest: /tmp/cert-manager-clusterissuer.yml
+    mode: "0644"
+
+- name: Appliquer le ClusterIssuer Let's Encrypt
+  ansible.builtin.command:
+    cmd: kubectl apply -f /tmp/cert-manager-clusterissuer.yml
+  register: clusterissuer_apply
+  changed_when: "'created' in clusterissuer_apply.stdout or 'configured' in clusterissuer_apply.stdout"

@@ -9,10 +9,10 @@ all:
     argocd_namespace: "argocd"
     application_namespace: "application"
     traefik_namespace: "traefik"
-    kyverno_namespace: "kyverno"
     monitoring_namespace: "monitoring"
     # Repo GitOps prive (non-secrets). Le token, lui, est dans le vault
     # (vault_argocd_repo_password). L'url DOIT matcher exactement le repoURL
     # de l'Application ArgoCD, sinon les credentials ne sont pas associes.
+    cert_manager_namespace: "cert-manager"
     argocd_repo_url: "https://github.com/Kubequest-Epitech/nex-application.git"
     argocd_repo_username: "kubequest"

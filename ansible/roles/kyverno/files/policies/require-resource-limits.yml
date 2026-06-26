@@ -31,6 +31,7 @@ spec:
                 - local-path-storage
                 - argocd
                 - traefik
+                - cert-manager
       validate:
         message: >-
           Chaque container doit definir resources.requests (cpu, memory)

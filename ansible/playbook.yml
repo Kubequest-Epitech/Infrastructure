@@ -29,9 +29,9 @@
   roles:
     - secrets
 
-# Helm est requis par kyverno, traefik et argocd : installe une seule fois,
-# avant tout le reste. Tag multiple pour que make kyverno/traefik/argocd
-# tirent l'installation de Helm au besoin.
+# Helm est requis par traefik, cert-manager, argocd et monitoring : installe une
+# seule fois, avant tout le reste. Tag multiple pour que make
+# traefik/argocd/cert-manager/monitoring tirent l'installation de Helm au besoin.
 - name: Installer Helm
   hosts: kube1
   tags:
@@ -39,6 +39,7 @@
     - traefik
     - argocd
     - monitoring
+    - cert-manager
   become: true
   roles:
     - install_helm
@@ -50,6 +51,13 @@
   become: true
   roles:
     - traefik
+
+- name: Deployer cert-manager
+  hosts: kube1
+  tags: cert-manager
+  become: true
+  roles:
+    - cert-manager
 
 - name: Installer ArgoCD sur le control-plane
   hosts: kube1
