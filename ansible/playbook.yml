@@ -80,6 +80,24 @@
   roles:
     - monitoring
 
+- name: Deployer Loki sur le cluster
+  hosts: kube1
+  tags:
+    - loki
+    - helm
+  become: true
+  roles:
+    - loki
+
+- name: Deployer Promtail sur le cluster
+  hosts: kube1
+  tags:
+    - promtail
+    - helm
+  become: true
+  roles:
+    - promtail
+
 - name: Supprimer le cluster Kubernetes
   hosts: kube_all
   tags:

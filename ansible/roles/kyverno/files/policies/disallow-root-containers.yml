@@ -32,6 +32,7 @@ spec:
                 - argocd
                 - traefik
                 - cert-manager
+                - monitoring
       validate:
         message: >-
           Les containers ne doivent pas tourner en root. Definissez

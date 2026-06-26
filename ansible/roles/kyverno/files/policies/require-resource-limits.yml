@@ -32,6 +32,7 @@ spec:
                 - argocd
                 - traefik
                 - cert-manager
+                - monitoring
       validate:
         message: >-
           Chaque container doit definir resources.requests (cpu, memory)

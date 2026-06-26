@@ -6,7 +6,7 @@ HOSTS=inventories/hosts
 PLAYBOOK=playbook.yml
 VENV=.venv
 
-.PHONY: help install run reset traefik argocd cert-manager app kyverno namespaces secrets argocd-password grafana-password monitoring kubeconfig tunnel dns encrypt decrypt
+.PHONY: help install run reset traefik argocd cert-manager app kyverno namespaces secrets argocd-password grafana-password monitoring kubeconfig tunnel dns encrypt decrypt loki promtail
 
 install: ## Installer les dependances Ansible dans le venv
 	@if ! $(VENV)/bin/python3 --version >/dev/null 2>&1; then \
@@ -181,6 +181,28 @@ dns: ## Afficher la commande pour configurer le DNS local (/etc/hosts)
 	echo "    Add-Content \$$h '$$IP argocd.kubequest.local'"; \
 	echo "    Add-Content \$$h '$$IP nex.kubequest.local'"; \
 	echo ""
+
+loki: install ## Deployer Loki sur le cluster (namespace monitoring)
+	@echo "Starting ssh-agent with venv..."
+	@bash -c '\
+		eval "$$(ssh-agent -s)"; \
+		. $(VENV)/bin/activate; \
+		echo "Adding vaulted SSH key..."; \
+		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
+		echo "Deploying Loki..."; \
+		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags loki; \
+	'
+
+promtail: install ## Deployer Promtail sur le cluster (namespace monitoring)
+	@echo "Starting ssh-agent with venv..."
+	@bash -c '\
+		eval "$$(ssh-agent -s)"; \
+		. $(VENV)/bin/activate; \
+		echo "Adding vaulted SSH key..."; \
+		$(VENV)/bin/ansible-vault view --ask-vault-pass $(VAULT_KEY) | ssh-add -; \
+		echo "Deploying Promtail..."; \
+		$(VENV)/bin/ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --tags promtail; \
+	'
 
 postgres: install ## Deployer PostgreSQL sur le cluster (namespace application)
 	@echo "Starting ssh-agent with venv..."
