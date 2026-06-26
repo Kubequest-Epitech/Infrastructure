@@ -21,7 +21,7 @@
       ======================================================
 
       GRAFANA:
-        URL      : http://{{ grafana_ingress_host }}
+        URL      : https://{{ grafana_ingress_host }}
         User     : admin
         Password : {{ grafana_password }}
         (aussi recuperable via : make grafana-password)
