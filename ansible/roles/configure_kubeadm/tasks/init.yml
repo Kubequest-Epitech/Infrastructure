@@ -45,8 +45,7 @@
 - name: Installer le CNI Calico
   ansible.builtin.command:
     cmd: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.3/manifests/calico.yaml
-  when: not configure_kubeadm_already_init.stat.exists
-  changed_when: true
+  changed_when: false
 
 - name: Retirer le taint control-plane
   ansible.builtin.command:
