@@ -9,15 +9,23 @@ grafana:
     existingSecret: grafana-admin
     userKey: admin-user
     passwordKey: admin-password
-  # Expose en Ingress standard via Traefik (meme pattern que argocd.visiobook.cloud).
-  # entrypoint `web` = HTTP (port 80) -> http://grafana.visiobook.cloud/
+  # Expose en HTTPS via Traefik + cert-manager (meme pattern que argocd.visiobook.cloud).
+  # - entrypoints web,websecure : ecoute en HTTP (80) ET HTTPS (443).
+  # - cert-manager.io/cluster-issuer : Let's Encrypt emet le cert automatiquement
+  #   (challenge HTTP-01 sur le port 80) et le stocke dans le Secret grafana-tls.
+  # -> https://grafana.visiobook.cloud/
   ingress:
     enabled: true
     ingressClassName: traefik
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+      cert-manager.io/cluster-issuer: letsencrypt-prod
     hosts:
       - grafana.visiobook.cloud
-    annotations:
-      traefik.ingress.kubernetes.io/router.entrypoints: web
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - grafana.visiobook.cloud
   # Persistance des dashboards/prefs custom sur la StorageClass du cluster.
   persistence:
     enabled: true
