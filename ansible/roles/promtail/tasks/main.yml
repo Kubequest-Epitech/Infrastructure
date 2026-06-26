@@ -1,0 +1,27 @@
+---
+- name: Ajouter le repo Helm Grafana
+  ansible.builtin.command:
+    cmd: helm repo add grafana https://grafana.github.io/helm-charts
+  register: grafana_repo_add
+  changed_when: "'has been added' in grafana_repo_add.stdout"
+  failed_when: grafana_repo_add.rc != 0 and 'already exists' not in grafana_repo_add.stderr
+
+- name: Mettre a jour les repos Helm
+  ansible.builtin.command:
+    cmd: helm repo update
+  changed_when: false
+
+- name: Copier les values Promtail sur le control plane
+  ansible.builtin.copy:
+    src: values.yml
+    dest: /tmp/promtail-values.yml
+    mode: "0644"
+
+- name: Deployer Promtail via Helm
+  ansible.builtin.command:
+    cmd: >
+      helm upgrade --install promtail grafana/promtail
+      --namespace {{ monitoring_namespace }}
+      --values /tmp/promtail-values.yml
+  register: promtail_helm_install
+  changed_when: "'STATUS: deployed' in promtail_helm_install.stdout"

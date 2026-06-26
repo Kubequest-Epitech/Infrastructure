@@ -1,0 +1,62 @@
+deploymentMode: SingleBinary
+
+loki:
+  auth_enabled: false
+  commonConfig:
+    replication_factor: 1
+  storage:
+    type: filesystem
+  schemaConfig:
+    configs:
+      - from: "2024-01-01"
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
+
+singleBinary:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+  securityContext:
+    runAsUser: 10001
+    runAsNonRoot: true
+    readOnlyRootFilesystem: false
+  persistence:
+    storageClass: local-path
+    size: 5Gi
+
+ingress:
+  enabled: true
+  ingressClassName: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+  hosts:
+    - loki.visiobook.cloud
+  tls:
+    - secretName: loki-visiobook-cloud-tls
+      hosts:
+        - loki.visiobook.cloud
+
+gateway:
+  enabled: false
+read:
+  replicas: 0
+write:
+  replicas: 0
+backend:
+  replicas: 0
+
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false

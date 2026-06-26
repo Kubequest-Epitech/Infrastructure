@@ -1,0 +1,52 @@
+---
+- name: Ajouter le repo Helm Grafana
+  ansible.builtin.command:
+    cmd: helm repo add grafana https://grafana.github.io/helm-charts
+  register: grafana_repo_add
+  changed_when: "'has been added' in grafana_repo_add.stdout"
+  failed_when: grafana_repo_add.rc != 0 and 'already exists' not in grafana_repo_add.stderr
+
+- name: Mettre a jour les repos Helm
+  ansible.builtin.command:
+    cmd: helm repo update
+  changed_when: false
+
+- name: Copier les values Loki sur le control plane
+  ansible.builtin.copy:
+    src: values.yml
+    dest: /tmp/loki-values.yml
+    mode: "0644"
+
+- name: Deployer Loki via Helm
+  ansible.builtin.command:
+    cmd: >
+      helm upgrade --install loki grafana/loki
+      --namespace {{ monitoring_namespace }}
+      --version {{ loki_chart_version }}
+      --values /tmp/loki-values.yml
+  register: loki_helm_install
+  changed_when: "'STATUS: deployed' in loki_helm_install.stdout"
+
+- name: Copier la datasource Grafana pour Loki sur le control plane
+  ansible.builtin.copy:
+    src: datasource.yml
+    dest: /tmp/loki-datasource.yml
+    mode: "0644"
+
+- name: Appliquer la datasource Grafana pour Loki
+  ansible.builtin.command:
+    cmd: kubectl apply -f /tmp/loki-datasource.yml
+  register: loki_datasource_apply
+  changed_when: "'configured' in loki_datasource_apply.stdout or 'created' in loki_datasource_apply.stdout"
+
+- name: Copier le dashboard Grafana pour Loki sur le control plane
+  ansible.builtin.copy:
+    src: dashboard.yml
+    dest: /tmp/loki-dashboard.yml
+    mode: "0644"
+
+- name: Appliquer le dashboard Grafana pour Loki
+  ansible.builtin.command:
+    cmd: kubectl apply -f /tmp/loki-dashboard.yml
+  register: loki_dashboard_apply
+  changed_when: "'configured' in loki_dashboard_apply.stdout or 'created' in loki_dashboard_apply.stdout"
