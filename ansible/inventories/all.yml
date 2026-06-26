@@ -14,7 +14,6 @@ all:
     # (vault_argocd_repo_password). L'url DOIT matcher exactement le repoURL
     # de l'Application ArgoCD, sinon les credentials ne sont pas associes.
     cert_manager_namespace: "cert-manager"
-    monitoring_namespace: "monitoring"
     loki_chart_version: "6.30.1"
     argocd_repo_url: "https://github.com/Kubequest-Epitech/nex-application.git"
     argocd_repo_username: "kubequest"

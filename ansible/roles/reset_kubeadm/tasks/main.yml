@@ -26,10 +26,12 @@
 - name: Supprimer les workers du cluster
   ansible.builtin.shell:
     cmd: |
+      set -o pipefail
       NODES=$(kubectl get nodes \
         --selector='!node-role.kubernetes.io/control-plane' \
         -o jsonpath='{.items[*].metadata.name}' 2>/dev/null)
       [ -n "$NODES" ] && echo "$NODES" | xargs kubectl delete node --force --grace-period=0 || true
+    executable: /bin/bash
   when: inventory_hostname in groups['kube1']
   failed_when: false
   changed_when: true

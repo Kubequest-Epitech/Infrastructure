@@ -3,3 +3,10 @@ exclude_paths:
   - .travis.yml
   - roles/install_kubeadm/tests/
   - roles/install_kubeadm/.travis.yml
+
+# var-naming[no-role-prefix] : regle purement idiomatique (tag "idiom", aucun
+# bug) qui impose de prefixer chaque variable de role par le nom du role. Tout
+# le depot la viole de longue date ; on la desactive plutot que de renommer des
+# dizaines de variables a travers tous les roles.
+skip_list:
+  - var-naming[no-role-prefix]

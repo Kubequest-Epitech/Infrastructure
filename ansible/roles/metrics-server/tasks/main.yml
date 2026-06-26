@@ -1,0 +1,48 @@
+---
+- name: Ajouter le repo Helm metrics-server
+  ansible.builtin.command:
+    cmd: helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+  register: metrics_server_repo_add
+  changed_when: "'has been added' in metrics_server_repo_add.stdout"
+  failed_when: metrics_server_repo_add.rc != 0 and 'already exists' not in metrics_server_repo_add.stderr
+
+- name: Mettre a jour les repos Helm
+  ansible.builtin.command:
+    cmd: helm repo update
+  changed_when: false
+
+- name: Copier les values metrics-server sur le control plane
+  ansible.builtin.copy:
+    src: values.yml
+    dest: /tmp/metrics-server-values.yml
+    mode: "0644"
+
+- name: Deployer metrics-server via Helm
+  ansible.builtin.command:
+    cmd: >
+      helm upgrade --install metrics-server metrics-server/metrics-server
+      --namespace {{ metrics_server_namespace }}
+      --version {{ metrics_server_chart_version }}
+      --values /tmp/metrics-server-values.yml
+  register: metrics_server_helm_install
+  changed_when: "'STATUS: deployed' in metrics_server_helm_install.stdout"
+
+- name: Attendre que metrics-server soit pret
+  ansible.builtin.command:
+    cmd: >
+      kubectl wait --for=condition=available
+      deployment/metrics-server
+      -n {{ metrics_server_namespace }}
+      --timeout=180s
+  changed_when: false
+
+- name: Verifier que l'API metrics.k8s.io repond (kubectl top nodes)
+  ansible.builtin.command:
+    cmd: kubectl top nodes --no-headers
+  register: metrics_server_top
+  # L'API peut mettre ~30-60s a remonter les premieres metriques apres le
+  # deploiement : on retente plutot que d'echouer immediatement.
+  retries: 6
+  delay: 10
+  until: metrics_server_top.rc == 0
+  changed_when: false

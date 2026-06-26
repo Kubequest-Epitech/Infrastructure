@@ -42,6 +42,20 @@
     regexp: "--default-unreachable-toleration-seconds="
   when: not configure_kubeadm_already_init.stat.exists
 
+# Les deux lineinfile ci-dessus modifient le manifest statique kube-apiserver :
+# la kubelet redemarre alors le pod apiserver, et le port 6443 est brievement
+# injoignable (connection refused). Sans cette attente, le `kubectl apply` Calico
+# qui suit court-circuite ce redemarrage et echoue. On attend donc que l'API
+# server reponde /healthz avant de continuer.
+- name: Attendre que l'API server reponde (apres patch du manifest -> redemarrage)
+  ansible.builtin.command:
+    cmd: kubectl get --raw=/healthz
+  register: configure_kubeadm_apiserver_health
+  until: configure_kubeadm_apiserver_health.rc == 0 and configure_kubeadm_apiserver_health.stdout == "ok"
+  retries: 30
+  delay: 5
+  changed_when: false
+
 - name: Installer le CNI Calico
   ansible.builtin.command:
     cmd: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.3/manifests/calico.yaml

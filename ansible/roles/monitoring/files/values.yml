@@ -44,6 +44,16 @@ grafana:
   # (selecteur de noeud). On garde ces dashboards par defaut.
   defaultDashboardsEnabled: true
 
+  # Sidecar dashboards : importe automatiquement tout ConfigMap labelise
+  # `grafana_dashboard=1` (cf. dashboard demo "Ingress/CPU/Autoscaling" pousse par
+  # le role monitoring). Le folder est fige ici pour pouvoir cibler le fichier
+  # genere en page d'accueil (default_home_dashboard_path ci-dessous).
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      folder: /tmp/dashboards
+
   # Pre-provisionne "Node Exporter Full" (grafana.com ID 1860) : LE dashboard de
   # reference pour les VM (CPU/RAM/disque/reseau par machine, dropdown instance).
   # /!\ Telecharge depuis grafana.com au 1er demarrage du pod -> requiert l'acces
@@ -67,12 +77,13 @@ grafana:
         revision: 37
         datasource: Prometheus
 
-  # Dashboard d'accueil par defaut = Node Exporter Full : a la connexion, on
-  # atterrit directement sur les metriques VM. Le chemin suit la convention du
-  # chart : /var/lib/grafana/dashboards/<provider>/<dashboard-key>.json
+  # Dashboard d'accueil = dashboard de demo "Ingress / CPU / Autoscaling" (pousse
+  # via ConfigMap sidecar). Le sidecar ecrit le fichier dans le folder fige
+  # ci-dessus (/tmp/dashboards) sous le nom de la cle du ConfigMap. Node Exporter
+  # Full reste accessible dans la liste des dashboards (dossier "VM").
   grafana.ini:
     dashboards:
-      default_home_dashboard_path: /var/lib/grafana/dashboards/vm-dashboards/node-exporter-full.json
+      default_home_dashboard_path: /tmp/dashboards/kubequest-hpa-demo.json
 
 # --- Prometheus ---
 prometheus:
